@@ -1,74 +1,49 @@
 // The exported code uses Tailwind CSS. Install Tailwind CSS in your dev environment to ensure all styles work.
 
-import React, { useState, useEffect } from "react";
-import { Input, Button, Card, Tag, Modal, message, Tooltip, Spin } from "antd";
-import {
-    SearchOutlined,
-    CopyOutlined,
-    UserOutlined,
-    LockOutlined,
-    CalendarOutlined,
-    UploadOutlined,
-} from "@ant-design/icons";
-import * as echarts from "echarts";
+import React, { useState, useEffect } from 'react';
+import { Input, Button, Card, Tag, Modal, message, Tooltip, Spin } from 'antd';
+import { SearchOutlined, CopyOutlined, UserOutlined, LockOutlined, CalendarOutlined, UploadOutlined } from '@ant-design/icons';
+import * as echarts from 'echarts';
 
 const App = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const mockUsers = [
-        {
-            id: 1,
-            name: "Alessandro Rossi",
-            keySize: "2048 bit",
-            uploadDate: "2025-03-12",
-            key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...",
-        },
-        {
-            id: 2,
-            name: "Marco Bianchi",
-            keySize: "4096 bit",
-            uploadDate: "2025-03-11",
-            key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8B...",
-        },
-        {
-            id: 3,
-            name: "Giuseppe Verdi",
-            keySize: "3072 bit",
-            uploadDate: "2025-03-10",
-            key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8C...",
-        },
+        { id: 1, name: 'Alessandro Rossi', keySize: '2048 bit', uploadDate: '2025-03-12', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...' },
+        { id: 2, name: 'Marco Bianchi', keySize: '4096 bit', uploadDate: '2025-03-11', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8B...' },
+        { id: 3, name: 'Giuseppe Verdi', keySize: '3072 bit', uploadDate: '2025-03-10', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8C...' },
     ];
 
     useEffect(() => {
         const initChart = () => {
-            const chartDom = document.getElementById("keySizeChart");
+            const chartDom = document.getElementById('keySizeChart');
             if (!chartDom) return;
 
             const myChart = echarts.init(chartDom);
             const option = {
                 animation: false,
                 title: {
-                    text: "Distribuzione Dimensioni Chiavi",
-                    left: "center",
+                    text: 'Distribuzione Dimensioni Chiavi',
+                    left: 'center'
                 },
                 tooltip: {
-                    trigger: "item",
+                    trigger: 'item'
                 },
                 series: [
                     {
-                        name: "Dimensione Chiave",
-                        type: "pie",
-                        radius: "70%",
+                        name: 'Dimensione Chiave',
+                        type: 'pie',
+                        radius: '70%',
                         data: [
-                            { value: 45, name: "2048 bit" },
-                            { value: 30, name: "3072 bit" },
-                            { value: 25, name: "4096 bit" },
-                        ],
-                    },
-                ],
+                            { value: 45, name: '2048 bit' },
+                            { value: 30, name: '3072 bit' },
+                            { value: 25, name: '4096 bit' }
+                        ]
+                    }
+                ]
             };
             myChart.setOption(option);
         };
@@ -81,13 +56,13 @@ const App = () => {
         setTimeout(() => {
             setIsAuthenticated(true);
             setIsLoading(false);
-            message.success("Login effettuato con successo!");
+            message.success('Login effettuato con successo!');
         }, 1000);
     };
 
     const handleUpload = () => {
         if (!isAuthenticated) {
-            message.warning("Effettua il login per caricare una chiave");
+            message.warning('Effettua il login per caricare una chiave');
             return;
         }
         setIsModalVisible(true);
@@ -95,7 +70,7 @@ const App = () => {
 
     const handleCopyKey = (key) => {
         navigator.clipboard.writeText(key);
-        message.success("Chiave copiata negli appunti!");
+        message.success('Chiave copiata negli appunti!');
     };
 
     return (
@@ -159,9 +134,7 @@ const App = () => {
                             />
                             <div className="space-y-4">
                                 <div>
-                                    <h4 className="text-sm font-medium mb-2">
-                                        Dimensione Chiave
-                                    </h4>
+                                    <h4 className="text-sm font-medium mb-2">Dimensione Chiave</h4>
                                     <div className="space-y-2">
                                         <div className="flex items-center">
                                             <input type="checkbox" id="2048" className="mr-2" />
@@ -182,7 +155,7 @@ const App = () => {
 
                         {/* Keys List */}
                         <div className="w-3/4 space-y-4">
-                            {mockUsers.map((user) => (
+                            {mockUsers.map(user => (
                                 <Card key={user.id} className="shadow-sm">
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -194,9 +167,7 @@ const App = () => {
                                                     {user.uploadDate}
                         </span>
                                             </p>
-                                            <p className="mt-2 font-mono text-sm text-gray-600">
-                                                {user.key.substring(0, 40)}...
-                                            </p>
+                                            <p className="mt-2 font-mono text-sm text-gray-600">{user.key.substring(0, 40)}...</p>
                                         </div>
                                         <Button
                                             icon={<CopyOutlined />}
@@ -215,7 +186,7 @@ const App = () => {
                 {/* Statistics */}
                 <div className="bg-white p-6 rounded-lg shadow mt-8">
                     <h2 className="text-xl font-semibold mb-4">Statistiche</h2>
-                    <div id="keySizeChart" style={{ height: "400px" }}></div>
+                    <div id="keySizeChart" style={{ height: '400px' }}></div>
                 </div>
             </main>
 
@@ -225,7 +196,7 @@ const App = () => {
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
                 onOk={() => {
-                    message.success("Chiave caricata con successo!");
+                    message.success('Chiave caricata con successo!');
                     setIsModalVisible(false);
                 }}
             >
@@ -245,3 +216,4 @@ const App = () => {
 };
 
 export default App;
+
