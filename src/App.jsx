@@ -53,11 +53,8 @@ const App = () => {
 
     const handleLogin = () => {
         setIsLoading(true);
-        setTimeout(() => {
-            setIsAuthenticated(true);
-            setIsLoading(false);
-            message.success('Login effettuato con successo!');
-        }, 1000);
+        // Apro pagina di login
+        window.location.href = "/login";
     };
 
     const handleUpload = () => {
@@ -94,7 +91,7 @@ const App = () => {
                             >
                                 Accedi
                             </Button>
-                        ) : (
+                                ) : (
                             <Button
                                 type="default"
                                 onClick={() => setIsAuthenticated(false)}
