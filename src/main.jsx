@@ -8,6 +8,8 @@ import { Provider } from 'react-redux'
 import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import Upload from "./pages/UploadKey.jsx";
+import UploadKey from "./pages/UploadKey.jsx";
 
 
 
@@ -23,6 +25,10 @@ const router = createBrowserRouter([
     {
         path: '/register',
         element: <Register></Register>,
+    },
+    {
+        path: '/upload',
+        element: <UploadKey></UploadKey>,
     }
 ])
 

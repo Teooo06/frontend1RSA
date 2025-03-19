@@ -6,7 +6,6 @@ import { SearchOutlined, CopyOutlined, UserOutlined, LockOutlined, CalendarOutli
 import * as echarts from 'echarts';
 
 const App = () => {
-    const [isModalVisible, setIsModalVisible] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -58,11 +57,11 @@ const App = () => {
     };
 
     const handleUpload = () => {
+        window.location.href = "/upload";
         if (!isAuthenticated) {
             message.warning('Effettua il login per caricare una chiave');
             return;
         }
-        setIsModalVisible(true);
     };
 
     const handleCopyKey = (key) => {
@@ -188,27 +187,7 @@ const App = () => {
                 </div>
             </main>
 
-            {/* Upload Modal */}
-            <Modal
-                title="Carica Nuova Chiave RSA"
-                open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
-                onOk={() => {
-                    message.success('Chiave caricata con successo!');
-                    setIsModalVisible(false);
-                }}
-            >
-                <Input.TextArea
-                    rows={4}
-                    placeholder="Incolla qui la tua chiave pubblica RSA"
-                    className="mb-4"
-                />
-                <p className="text-gray-500 text-sm">
-                    Formato supportato: PEM
-                    <br />
-                    Dimensioni supportate: 2048, 3072, 4096 bit
-                </p>
-            </Modal>
+
         </div>
     );
 };
