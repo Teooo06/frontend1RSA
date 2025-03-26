@@ -22,6 +22,7 @@ const UploadKey = () => {
     };
 
     const handleCancel = () => {
+        window.location.href = "/";
         setKey('');
         message.info('Operazione annullata.');
     };
