@@ -11,6 +11,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import UploadKey from './pages/UploadKey.jsx';
+import UserSection from "./UserSection.jsx";
 
 // Define routes
 const router = createBrowserRouter([
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
     {
         path: '/upload',
         element: <UploadKey />,
+    },
+    {
+        path: '/userSection',
+        element: <UserSection />,
     },
 ]);
 
