@@ -15,7 +15,11 @@ const UserSection = () => {
     const handleLogout = () => {
         setIsAuthenticated(false);
         message.info('Disconnessione effettuata');
-        navigate('/'); // Reindirizza l'utente alla homepage (App.jsx)
+        navigate('/'); // Reindirizza alla homepage
+    };
+
+    const handleUpload = () => {
+        navigate('/upload'); // Reindirizza alla pagina UploadKey.jsx
     };
 
     return (
@@ -27,14 +31,14 @@ const UserSection = () => {
                     <div className="flex items-center space-x-6">
                         {isAuthenticated ? (
                             <>
-                                <Button type="text" onClick={() => setIsModalVisible(true)}>
+                                <Button type="text" onClick={handleUpload}>
                                     <UploadOutlined /> Carica Chiave
                                 </Button>
                                 <Button type="text" onClick={handleLogout}>Disconnetti</Button>
                             </>
                         ) : (
-                            <Button type="default" onClick={handleLogout}>
-                                Disconnetti
+                            <Button type="default" onClick={() => navigate('/login')}>
+                                Accedi
                             </Button>
                         )}
                     </div>
@@ -55,7 +59,7 @@ const UserSection = () => {
                         {isAuthenticated ? (
                             <div className="text-center py-8">
                                 <p>Non hai ancora caricato nessuna chiave</p>
-                                <Button type="primary" onClick={() => setIsModalVisible(true)}>Carica la tua prima chiave</Button>
+                                <Button type="primary" onClick={handleUpload}>Carica la tua prima chiave</Button>
                             </div>
                         ) : (
                             <div className="text-center py-8">
