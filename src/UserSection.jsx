@@ -13,9 +13,9 @@ const UserSection = () => {
     const navigate = useNavigate(); // Hook per la navigazione
 
     const handleLogout = () => {
-        localStorage.setItem('isAuthenticated', 'false'); // Salva il logout
+        setIsAuthenticated(false);
         message.info('Disconnessione effettuata');
-        navigate('/'); // Torna alla homepage
+        navigate('/'); // Reindirizza l'utente alla homepage (App.jsx)
     };
 
     return (

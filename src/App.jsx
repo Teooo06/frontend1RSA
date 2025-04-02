@@ -10,6 +10,7 @@ const App = () => {
     // State variables
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(true);
 
     // Mock data for users
     const mockUsers = [
@@ -49,20 +50,10 @@ const App = () => {
     }, []);
 
     // Handlers
-    const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('isAuthenticated') === 'false');
-
-    const handleLogout = () => {
-        localStorage.setItem('isAuthenticated', 'false'); // Salva il logout
-        setIsAuthenticated(false);
-        navigate('/'); // Torna alla homepage
-    };
-
     const handleLogin = () => {
-        localStorage.setItem('isAuthenticated', 'true'); // Salva il login
-        setIsAuthenticated(true);
-        navigate('/userSection'); // Vai all'area personale
+        setIsLoading(true);
+        window.location.href = '/login';
     };
-
 
     const handleUpload = () => {
         if (!isAuthenticated) {
