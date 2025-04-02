@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Input, Button, Card, Tag, message } from 'antd';
 import { SearchOutlined, CopyOutlined, UserOutlined, CalendarOutlined, UploadOutlined } from '@ant-design/icons';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import * as echarts from 'echarts';
+import { useNavigate } from 'react-router-dom'; // Just use the navigate hook
 
 const App = () => {
-    const navigate = useNavigate(); // Hook per la navigazione
+    const navigate = useNavigate(); // Hook for navigation
 
     // State variables
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(true);
 
     // Mock data for users
     const mockUsers = [
-        { id: 1, name: 'Alessandro Rossi', keySize: '2048 bit', uploadDate: '2025-03-12', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...' },
-        { id: 2, name: 'Marco Bianchi', keySize: '4096 bit', uploadDate: '2025-03-11', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8B...' },
-        { id: 3, name: 'Giuseppe Verdi', keySize: '3072 bit', uploadDate: '2025-03-10', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8C...' },
+        { id: 1, name: 'Alessandro Rossi', keySize: '2048 bit', uploadDate: '2025-03-12', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A' },
+        { id: 2, name: 'Marco Bianchi', keySize: '4096 bit', uploadDate: '2025-03-11', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8B' },
+        { id: 3, name: 'Giuseppe Verdi', keySize: '3072 bit', uploadDate: '2025-03-10', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8C' },
     ];
 
     // Initialize chart
@@ -50,10 +49,20 @@ const App = () => {
     }, []);
 
     // Handlers
-    const handleLogin = () => {
-        setIsLoading(true);
-        window.location.href = '/login';
+    const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('isAuthenticated') === 'false');
+
+    const handleLogout = () => {
+        localStorage.setItem('isAuthenticated', 'false'); // Salva il logout
+        setIsAuthenticated(false);
+        navigate('/'); // Torna alla homepage
     };
+
+    const handleLogin = () => {
+        localStorage.setItem('isAuthenticated', 'true'); // Salva il login
+        setIsAuthenticated(true);
+        navigate('/userSection'); // Vai all'area personale
+    };
+
 
     const handleUpload = () => {
         if (!isAuthenticated) {
@@ -191,13 +200,4 @@ const App = () => {
     );
 };
 
-// Wrappa App con Router per usare useNavigate
-const WrappedApp = () => (
-    <Router>
-        <Routes>
-            <Route path="/*" element={<App />} />
-        </Routes>
-    </Router>
-);
-
-export default WrappedApp;
+export default App;
