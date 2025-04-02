@@ -9,7 +9,7 @@ const UploadKey = () => {
 
     // Function to generate a fake RSA key
     const generateKey = () => {
-        const fakeKey = `-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...\n-----END PUBLIC KEY-----`;
+        const fakeKey = `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A`;
         setKey(fakeKey);
         message.success('Chiave generata con successo!');
     };
