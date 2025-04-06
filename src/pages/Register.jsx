@@ -1,243 +1,148 @@
 import { useState } from "react";
-import { FaUser, FaLock, FaEnvelope, FaCalendar, FaMapMarkerAlt, FaVenusMars, FaCreditCard, FaIdCard } from "react-icons/fa";
+import axios from "axios";
+import {message} from "antd";
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "../contex/AuthContext.jsx";
+import {FaLock, FaUser} from "react-icons/fa";
 
 function Register() {
-    
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        birthDate: "",
-        birthPlace: "",
-        address: "",
-        gender: "",
-        otherGender: "",
-        cardNumber: "",
-        expiryDate: "",
-        cvv: "",
-        acceptTerms: false,
-    });
+    const [name, setName] = useState('');
+    const [surname, setSurname] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [error, setError] = useState(null);
 
-    const handleChange = (e) => {
+    const navigate = useNavigate();
+    const { login, setuser } = useAuth();
 
-        const { name, value, type, checked } = e.target;
-    
-        setFormData({
-            ...formData,
-            [name]: type === "checkbox" ? checked : value,
-        });
-    
+    const handleSingIn = async () => {
+        setIsLoading(true); // Impostiamo lo stato di caricamento su true
+        setError(null); // Resettiamo eventuali errori precedenti
+        try {
+            const singInData = {
+                name: name,
+                surname: surname,
+                username: username,
+                password: password
+            };
+
+            console.log(singInData);
+
+            const response = await axios.post(
+                `http://localhost:8080/api/users/register`, // Percorso corretto per il login
+                singInData, // Corpo della richiesta
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                setIsAuthenticated(true);  // L'utente è autenticato
+                message.success('Sing In effettuato con successo!');
+                login(username);
+                navigate("/");
+            } else {
+                setError('Credenziali errate.');
+                message.error('Credenziali errate.');
+            }
+        } catch (error) {
+            setIsLoading(false);
+
+            if (error.response && error.response.status === 409) {
+                setError("Username già esistente.");
+            } else {
+                setError("Errore durante la registrazione.");
+            }
+
+            console.error("Errore nella registrazione:", error);
+        }
     };
 
     return (
     
-        <div
-            className="flex items-center justify-center w-screen bg-gradient-to-br from-blue-100 to-purple-100 p-6"
-            style={{ height: "calc(200vh)" }}
-        >
+        <div className="flex items-center justify-center h-screen w-screen bg-white">
 
-            <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200">
                 
-                <h2 className="text-4xl font-bold text-center text-gray-800 mb-6">
+                <h2 className="text-4xl font-bold text-center text-black mb-6">
                     Registrati
                 </h2>
                 
-                <form className="flex flex-col gap-4">
-
-                    {/* Personal Information */}
-                    <section>
-                        
-                        <label className="text-gray-700 font-medium">Nome</label>
-                        
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                            placeholder="Inserisci il tuo nome"
-                        />
-
-                        <label className="text-gray-700 font-medium">Email</label>
-                        
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                            placeholder="Inserisci la tua email"
-                        />
-
-                    </section>
-
-                    {/* Birth Information */}
-                    <section>
-                        
-                        <label className="text-gray-700 font-medium">Data di nascita</label>
-                        
-                        <input
-                            type="date"
-                            name="birthDate"
-                            value={formData.birthDate}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                        />
-
-                        <label className="text-gray-700 font-medium">Luogo di nascita</label>
-                        
-                        <input
-                            type="text"
-                            name="birthPlace"
-                            value={formData.birthPlace}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                            placeholder="Inserisci il luogo di nascita"
-                        />
-                    
-                    </section>
-
-                    {/* Address Information */}
-                    <section>
-
-                        
-                        <label className="text-gray-700 font-medium">Indirizzo</label>
-                        
-                        <input
-                            type="text"
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                            placeholder="Inserisci il tuo indirizzo"
-                        />
-
-                    </section>
-
-                    {/* Gender Selection */}
-                    <section>
-                        
-                        <label className="text-gray-700 font-medium">Sesso</label>
-                        
-                        <select
-                            name="gender"
-                            value={formData.gender}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                        >
-                            <option value="">Seleziona</option>
-                            <option value="maschio">Maschio</option>
-                            <option value="femmina">Femmina</option>
-                            <option value="altro">Altro</option>
-                        </select>
-                        
-                        {formData.gender === "altro" && (
+                <form className="text-black">
+                    <div className="mb-6">
+                        <label className="block text-black font-medium mb-2">
+                            Nome
+                        </label>
+                        <div className="flex items-center border rounded-lg p-3 bg-white focus-within:ring-2 focus-within:ring-blue-500">
+                            <FaUser className="text-gray-500 mr-2" />
                             <input
                                 type="text"
-                                name="otherGender"
-                                value={formData.otherGender}
-                                onChange={handleChange}
-                                className="border p-3 rounded-lg"
-                                placeholder="Specifica il tuo genere"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full bg-transparent focus:outline-none text-lg text-black"
+                                placeholder="Inserisci il tuo nome"
                             />
-                        )}
-
-                    </section>
-
-                    {/* Credit Card Information */}
-                    <section>
-
-                        <label className="text-gray-700 font-medium">Numero Carta di Credito</label>
-                        
-                        <input
-                            type="text"
-                            name="cardNumber"
-                            value={formData.cardNumber}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                            placeholder="Inserisci il numero della carta"
-                        />
-
-                        <div className="flex gap-4">
-                        
-                            <div className="flex-1">
-                                <label className="text-gray-700 font-medium">Data di scadenza</label>
-                                <input
-                                    type="month"
-                                    name="expiryDate"
-                                    value={formData.expiryDate}
-                                    onChange={handleChange}
-                                    className="border p-3 rounded-lg w-full"
-                                />
-                            </div>
-
-                            <div className="flex-1">
-                                <label className="text-gray-700 font-medium">CVV</label>
-                                <input
-                                    type="text"
-                                    name="cvv"
-                                    value={formData.cvv}
-                                    onChange={handleChange}
-                                    className="border p-3 rounded-lg w-full"
-                                    placeholder="CVV"
-                                />
-                            </div>
-
                         </div>
-                    
-                    </section>
-
-                    {/* Password Section */}
-                    <section>
-
-                        <label className="text-gray-700 font-medium">Password</label>
-                        
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                            placeholder="Inserisci la tua password"
-                        />
-
-                        <label className="text-gray-700 font-medium">Conferma Password</label>
-                        
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className="border p-3 rounded-lg"
-                            placeholder="Ripeti la password"
-                        />
-                    
-                    </section>
-
-                    {/* Terms and Conditions */}
-                    <section>
-
-                        <div className="flex items-center">
-                    
+                    </div>
+                    <div className="mb-6">
+                        <label className="block text-black font-medium mb-2">
+                            Cognome
+                        </label>
+                        <div className="flex items-center border rounded-lg p-3 bg-white focus-within:ring-2 focus-within:ring-blue-500">
+                            <FaUser className="text-gray-500 mr-2" />
                             <input
-                                type="checkbox"
-                                name="acceptTerms"
-                                checked={formData.acceptTerms}
-                                onChange={handleChange}
-                                className="w-5 h-5 mr-2"
+                                type="text"
+                                value={surname}
+                                onChange={(e) => setSurname(e.target.value)}
+                                className="w-full bg-transparent focus:outline-none text-lg text-black"
+                                placeholder="Inserisci il tuo cognome"
                             />
-                    
-                            <label className="text-gray-700 text-sm">Accetto il trattamento dei dati personali</label>
-                    
                         </div>
-                    
-                    </section>
-
+                    </div>
+                    <div className="mb-6">
+                        <label className="block text-black font-medium mb-2">
+                            Username
+                        </label>
+                        <div className="flex items-center border rounded-lg p-3 bg-white focus-within:ring-2 focus-within:ring-blue-500">
+                            <FaUser className="text-gray-500 mr-2" />
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                className="w-full bg-transparent focus:outline-none text-lg text-black"
+                                placeholder="Inserisci il tuo username"
+                            />
+                        </div>
+                    </div>
+                    <div className="mb-6">
+                        <label className="block text-black font-medium mb-2">
+                            Password
+                        </label>
+                        <div className="flex items-center border rounded-lg p-3 bg-white focus-within:ring-2 focus-within:ring-blue-500">
+                            <FaLock className="text-gray-500 mr-2" />
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-transparent focus:outline-none text-lg text-black"
+                                placeholder="Inserisci la tua password"
+                            />
+                        </div>
+                    </div>
                     {/* Submit Button */}
+                    {error && (
+                        <div className="text-red-600 text-center font-medium mb-4">
+                            {error}
+                        </div>
+                    )}
                     <button
                         type="button"
-                        className="w-full bg-purple-500 text-white py-3 rounded-lg font-semibold text-xl hover:bg-purple-600 transition duration-300"
+                        onClick={handleSingIn}
+                        className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold text-xl hover:bg-blue-600 transition duration-300"
                     >
                         Registrati
                     </button>

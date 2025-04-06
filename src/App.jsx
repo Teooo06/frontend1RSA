@@ -3,21 +3,36 @@ import { Input, Button, Card, Tag, message } from 'antd';
 import { SearchOutlined, CopyOutlined, UserOutlined, CalendarOutlined, UploadOutlined } from '@ant-design/icons';
 import * as echarts from 'echarts';
 import { useNavigate } from 'react-router-dom'; // Just use the navigate hook
+import axios from 'axios'; // Import axios for making requests
+import { useAuth } from "./contex/AuthContext.jsx";
 
 const App = () => {
     const navigate = useNavigate(); // Hook for navigation
 
     // State variables
-    const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(true);
+    const [users, setUsers] = useState([]); // State to store users' data
+    const {isAuthenticated, logout } = useAuth(); // Usa lo stato di autenticazione
 
-    // Mock data for users
-    const mockUsers = [
-        { id: 1, name: 'Alessandro Rossi', keySize: '2048 bit', uploadDate: '2025-03-12', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A' },
-        { id: 2, name: 'Marco Bianchi', keySize: '4096 bit', uploadDate: '2025-03-11', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8B' },
-        { id: 3, name: 'Giuseppe Verdi', keySize: '3072 bit', uploadDate: '2025-03-10', key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8C' },
-    ];
+    // Fetch users data from backend
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/api/users/getKeys'); // Make a GET request to fetch data
+                if (Array.isArray(response.data)) {
+                    setUsers(response.data); // Set the response data to the state
+                } else {
+                    setUsers([]); // Ensure we set users as an empty array if the response is not an array
+                    message.error('Dati non validi ricevuti dal server.');
+                }
+            } catch (error) {
+                console.error('Error fetching users data:', error);
+                setUsers([]); // Ensure we set users as an empty array in case of an error
+                message.error('Impossibile caricare i dati degli utenti.');
+            }
+        };
+        fetchUsers();
+    }, []); // Empty dependency array to fetch data only on mount
 
     // Initialize chart
     useEffect(() => {
@@ -49,10 +64,16 @@ const App = () => {
         initChart();
     }, []);
 
+    // Force light theme (even when the browser is in dark mode)
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', 'light'); // Force light theme globally
+        document.body.style.backgroundColor = '#f0f0f0'; // Keep body background light
+        document.body.style.color = '#000'; // Make text dark
+    }, []);
+
     // Handlers
     const handleLogin = () => {
-        setIsLoading(true);
-        window.location.href = '/login';
+        navigate('/login');
     };
 
     const handleUpload = () => {
@@ -60,7 +81,7 @@ const App = () => {
             message.warning('Effettua il login per caricare una chiave');
             return;
         }
-        window.location.href = '/upload';
+        window.location.href = '/upload'; // Navigate to upload page
     };
 
     const handleCopyKey = (key) => {
@@ -68,8 +89,12 @@ const App = () => {
         message.success('Chiave copiata negli appunti!');
     };
 
+    const handleLogOut = () => {
+        logout();
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50" style={{ width: '100%' }}>
+        <div className="min-h-screen">
             {/* Header */}
             <header className="bg-white shadow-md">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -89,7 +114,7 @@ const App = () => {
                             <>
                                 <Button
                                     type="default"
-                                    onClick={() => setIsAuthenticated(false)}
+                                    onClick={handleLogOut}
                                     className="!rounded-button whitespace-nowrap"
                                 >
                                     Disconnetti
@@ -128,55 +153,49 @@ const App = () => {
                     )}
 
                     <div className="flex space-x-6">
-                        {/* Filters */}
-                        <aside className="w-1/4 bg-white p-4 rounded-lg shadow">
-                            <h3 className="text-lg font-medium mb-4">Filtri</h3>
-                            <Input
-                                placeholder="Cerca per nome utente"
-                                prefix={<SearchOutlined />}
-                                className="mb-4"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-medium mb-2">Dimensione Chiave</h4>
-                                {['2048', '3072', '4096'].map((size) => (
-                                    <div key={size} className="flex items-center">
-                                        <input type="checkbox" id={size} className="mr-2" />
-                                        <label htmlFor={size}>{size} bit</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </aside>
-
                         {/* Keys List */}
-                        <section className="w-3/4 space-y-4">
-                            {mockUsers.map((user) => (
-                                <Card key={user.id} className="shadow-sm">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="text-lg font-medium">{user.name}</h3>
-                                            <p className="text-gray-500 mt-1">
-                                                <Tag color="blue">{user.keySize}</Tag>
-                                                <span className="ml-2">
-                                                    <CalendarOutlined className="mr-1" />
-                                                    {user.uploadDate}
-                                                </span>
-                                            </p>
-                                            <p className="mt-2 font-mono text-sm text-gray-600">
-                                                {user.key.substring(0, 40)}...
-                                            </p>
+                        <section className="w-full space-y-4">
+                            {users.length === 0 ? (
+                                <p>Nessuna chiave trovata</p>
+                            ) : (
+                                users.map((user, index) => (
+                                    <Card key={index} className="shadow-sm">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                {/* Nome completo e username */}
+                                                <h3 className="text-lg font-medium">
+                                                    {user.user
+                                                        ? `${user.user.name} ${user.user.surname} (${user.user.username})`
+                                                        : 'Utente sconosciuto'}
+                                                </h3>
+
+                                                {/* Stato validazione */}
+                                                <p className="text-gray-500 mt-1">
+                                                    <Tag color={user.validazioni ? 'green' : 'red'}>
+                                                        {user.validazioni ? 'Validata' : 'Non Validata'}
+                                                    </Tag>
+                                                </p>
+
+                                                {/* Anteprima della chiave pubblica */}
+                                                <p className="mt-2 font-mono text-sm text-gray-600">
+                                                    {user.publicK
+                                                        ? user.publicK.substring(0, 100)
+                                                        : 'Nessuna chiave disponibile'}
+                                                </p>
+                                            </div>
+
+                                            {/* Pulsante copia */}
+                                            <Button
+                                                icon={<CopyOutlined />}
+                                                onClick={() => handleCopyKey(user.publicK)}
+                                                className="!rounded-button whitespace-nowrap"
+                                            >
+                                                Copia Chiave
+                                            </Button>
                                         </div>
-                                        <Button
-                                            icon={<CopyOutlined />}
-                                            onClick={() => handleCopyKey(user.key)}
-                                            className="!rounded-button whitespace-nowrap"
-                                        >
-                                            Copia Chiave
-                                        </Button>
-                                    </div>
-                                </Card>
-                            ))}
+                                    </Card>
+                                ))
+                            )}
                         </section>
                     </div>
                 </section>

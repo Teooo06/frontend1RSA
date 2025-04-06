@@ -1,35 +1,56 @@
 import React, { useState } from 'react';
 import { Button, Input, message, Card } from 'antd';
+import {useNavigate} from "react-router-dom";
+import axios from "axios";
 
 const { TextArea } = Input;
 
 const UploadKey = () => {
 
     const [key, setKey] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    // Function to generate a fake RSA key
-    const generateKey = () => {
-        const fakeKey = `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A`;
-        setKey(fakeKey);
-        message.success('Chiave generata con successo!');
-    };
+    const navigate = useNavigate();
 
-    // Function to handle key confirmation
-    const handleConfirm = () => {
-    
-        if (!key.trim()) {
-            message.error('Inserisci una chiave valida!');
-            return;
+    const handleConfirm = async () => {
+        setIsLoading(true); // Impostiamo lo stato di caricamento su true
+        setError(null); // Resettiamo eventuali errori precedenti
+        try {
+            const loginData = {
+                key: key,
+                user: localStorage.getItem('username')
+            };
+
+            const response = await axios.post(
+                `http://localhost:8080/api/users/addKey`, // Percorso corretto per il login
+                loginData, // Corpo della richiesta
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                message.success('Chiave salvata con successo!');
+                navigate("/");
+            } else {
+                setError('Credenziali errate.');
+                message.error('Credenziali errate.');
+            }
+        } catch (error) {
+            setIsLoading(false);
+            setError('Errore durante il login.');
+            message.error('Errore durante il login.');
+            console.error('Errore nel login:', error);
         }
-    
-        message.success('Chiave caricata con successo!');
-        setKey('');
-    
     };
+
 
     // Function to handle cancel action
     const handleCancel = () => {
-        window.location.href = "/";
+        navigate("/");
         setKey('');
         message.info('Operazione annullata.');
     };
@@ -53,11 +74,6 @@ const UploadKey = () => {
                     placeholder="Incolla qui la tua chiave pubblica RSA"
                     className="mb-4"
                 />
-
-                {/* Button to generate a new key */}
-                <Button type="default" onClick={generateKey} block className="mb-2">
-                    Genera Chiave
-                </Button>
 
                 {/* Action buttons */}
                 <div className="flex justify-between mt-4">
