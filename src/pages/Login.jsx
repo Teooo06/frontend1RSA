@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { FaUser, FaLock } from "react-icons/fa";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import {message} from "antd";
+import { message, Button } from "antd";
 import { useAuth } from "../contex/AuthContext.jsx";
+import { useTheme } from "../contex/ThemeContext.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 function Login() {
     const [username, setUsername] = useState('');
@@ -12,10 +14,17 @@ function Login() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [error, setError] = useState(null);
 
+    // Create refs for form elements for keyboard navigation
+    const usernameInputRef = useRef(null);
+    const passwordInputRef = useRef(null);
+    const loginButtonRef = useRef(null);
+
     const navigate = useNavigate();
     const { login } = useAuth();
+    const { darkMode } = useTheme();
 
-    const handleLogin = async () => {
+    // Handle form submission - for both button click and Enter key
+    const handleSubmit = async () => {
         setIsLoading(true); // Impostiamo lo stato di caricamento su true
         setError(null); // Resettiamo eventuali errori precedenti
         try {
@@ -51,26 +60,57 @@ function Login() {
         }
     };
 
+    // Rename the existing function and call the new handleSubmit function
+    const handleLogin = handleSubmit;
+
+    // Handle Enter key press to navigate between fields
+    const handleKeyDown = (e, field) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (field === 'username') {
+                passwordInputRef.current.focus();
+            } else if (field === 'password') {
+                // Submit the form when Enter is pressed on the password field
+                handleSubmit();
+                // Remove focus from the input
+                passwordInputRef.current.blur();
+            }
+        }
+    };
+
+    const goToHome = () => {
+        navigate('/');
+    };
+
     return (
-        <div className="flex items-center justify-center h-screen w-screen bg-white">
-            <div className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200">
-                <h2 className="text-4xl font-bold text-center text-black mb-6">
+        <div className={`flex items-center justify-center h-screen w-screen ${darkMode ? 'bg-darkBg' : 'bg-white'}`}>
+            <div className={`${darkMode ? 'bg-darkCard border-darkBorder' : 'bg-white border-gray-200'} p-10 rounded-2xl shadow-2xl w-full max-w-lg border`}>
+                <div className="flex justify-end mb-4 items-center">
+                    <ThemeToggle />
+                </div>
+                
+                <h2 
+                    onClick={goToHome}
+                    className={`text-4xl font-bold text-center ${darkMode ? 'text-white' : 'text-black'} mb-6 cursor-pointer hover:text-blue-500`}
+                >
                     Accedi
                 </h2>
 
-                <form className="text-black">
+                <form className={darkMode ? 'text-white' : 'text-black'}>
                     {/* Username Input */}
                     <div className="mb-6">
-                        <label className="block text-black font-medium mb-2">
+                        <label className={`block ${darkMode ? 'text-white' : 'text-black'} font-medium mb-2`}>
                             Username
                         </label>
-                        <div className="flex items-center border rounded-lg p-3 bg-white focus-within:ring-2 focus-within:ring-blue-500">
+                        <div className={`flex items-center border rounded-lg p-3 ${darkMode ? 'bg-darkCard border-darkBorder' : 'bg-white'} focus-within:ring-2 focus-within:ring-blue-500`}>
                             <FaUser className="text-gray-500 mr-2" />
                             <input
+                                ref={usernameInputRef}
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full bg-transparent focus:outline-none text-lg text-black"
+                                onKeyDown={(e) => handleKeyDown(e, 'username')}
+                                className={`w-full bg-transparent focus:outline-none text-lg ${darkMode ? 'text-white placeholder-gray-400' : 'text-black'}`}
                                 placeholder="Inserisci il tuo username"
                             />
                         </div>
@@ -78,16 +118,18 @@ function Login() {
 
                     {/* Password Input */}
                     <div className="mb-6">
-                        <label className="block text-black font-medium mb-2">
+                        <label className={`block ${darkMode ? 'text-white' : 'text-black'} font-medium mb-2`}>
                             Password
                         </label>
-                        <div className="flex items-center border rounded-lg p-3 bg-white focus-within:ring-2 focus-within:ring-blue-500">
+                        <div className={`flex items-center border rounded-lg p-3 ${darkMode ? 'bg-darkCard border-darkBorder' : 'bg-white'} focus-within:ring-2 focus-within:ring-blue-500`}>
                             <FaLock className="text-gray-500 mr-2" />
                             <input
+                                ref={passwordInputRef}
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-transparent focus:outline-none text-lg text-black"
+                                onKeyDown={(e) => handleKeyDown(e, 'password')}
+                                className={`w-full bg-transparent focus:outline-none text-lg ${darkMode ? 'text-white placeholder-gray-400' : 'text-black'}`}
                                 placeholder="Inserisci la tua password"
                             />
                         </div>
@@ -96,6 +138,7 @@ function Login() {
                     {/* Submit Button */}
                     <button
                         type="button"
+                        ref={loginButtonRef}
                         onClick={handleLogin}
                         className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold text-xl hover:bg-blue-600 transition duration-300"
                     >
@@ -103,13 +146,23 @@ function Login() {
                     </button>
                 </form>
 
-                {/* Register Link */}
-                <p className="text-center text-gray-600 mt-6">
-                    Non hai un account?{" "}
-                    <a href="/register" className="text-blue-500 hover:underline">
+                {/* Footer with navigation links */}
+                <div className="mt-6 pt-4 border-t border-gray-300 flex justify-between">
+                    <Button 
+                        type="link" 
+                        onClick={() => navigate('/register')}
+                        className="text-blue-500 hover:text-blue-600"
+                    >
                         Registrati
-                    </a>
-                </p>
+                    </Button>
+                    <Button 
+                        type="link" 
+                        onClick={goToHome}
+                        className="text-blue-500 hover:text-blue-600"
+                    >
+                        Torna alla Home
+                    </Button>
+                </div>
             </div>
         </div>
     );

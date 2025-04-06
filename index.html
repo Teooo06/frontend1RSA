@@ -6,6 +6,16 @@
     <link rel="icon" type="image/svg+xml" href="/rsa.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KeyVault RSA</title>
+    <script>
+      // Check for saved theme preference
+      const savedTheme = localStorage.getItem('darkMode');
+      if (savedTheme === 'true') {
+        document.documentElement.classList.add('dark');
+        document.body.style.backgroundColor = '#1a1a1a';
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
   </head>
   <body>
     <div id="root" style="width: 100%"></div>

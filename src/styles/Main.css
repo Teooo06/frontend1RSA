@@ -17,6 +17,104 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Additional dark mode styles for Ant Design components */
+.dark .ant-btn:not(.ant-btn-primary):not(.ant-btn-text) {
+  background-color: #2d2d2d;
+  border-color: #444;
+  color: #fff;
+}
+
+.dark .ant-btn:not(.ant-btn-primary):hover {
+  border-color: #666;
+  color: #fff;
+}
+
+/* Fix for input boxes in dark mode */
+.dark input,
+.dark textarea,
+.dark .ant-input {
+  background-color: #2d2d2d !important;
+  border-color: #444 !important;
+  color: #fff !important;
+}
+
+/* Keep dark background when input is focused */
+.dark input:focus,
+.dark textarea:focus,
+.dark .ant-input:focus,
+.dark .ant-input-focused {
+  background-color: #2d2d2d !important;
+  border-color: #1677ff !important; /* Blue border to indicate focus */
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2) !important;
+}
+
+/* Fix placeholder text color in dark mode */
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark .ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Fix for Ant Design Input components */
+.dark .ant-input-affix-wrapper {
+  background-color: #2d2d2d !important;
+  border-color: #444 !important;
+}
+
+.dark .ant-input-affix-wrapper:focus,
+.dark .ant-input-affix-wrapper-focused {
+  background-color: #2d2d2d !important;
+  border-color: #1677ff !important;
+}
+
+/* Custom notification styling */
+.custom-notification-class {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 10px 15px !important;
+}
+
+.dark .custom-notification-class {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+}
+
+.dark .ant-message .custom-notification-class {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+}
+
+.ant-message .custom-notification-class {
+  border-left: 4px solid #52c41a !important;
+}
+
+/* Custom notification styling - Fix visibility issues */
+.ant-message .ant-message-notice-content {
+  padding: 10px 16px;
+}
+
+.ant-message .custom-notification-class {
+  font-size: 16px;
+  font-weight: 500;
+  border-left: 4px solid #52c41a;
+  background: rgba(82, 196, 26, 0.1);
+  display: flex;
+  align-items: center;
+}
+
+/* Dark mode styling for notifications */
+.dark .ant-message .custom-notification-class {
+  background-color: #2d2d2d;
+  border-left: 4px solid #52c41a;
+  color: white;
+}
+
+/* Ensure icon is visible and properly aligned */
+.ant-message .custom-notification-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

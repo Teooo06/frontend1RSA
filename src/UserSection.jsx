@@ -3,6 +3,8 @@ import { Input, Button, Card, Tabs, Modal, message, Tag } from 'antd';
 import { SearchOutlined, UploadOutlined, CopyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "./contex/AuthContext.jsx";
+import { useTheme } from "./contex/ThemeContext.jsx";
+import ThemeToggle from './components/ThemeToggle.jsx';
 import axios from 'axios';
 
 const { TabPane } = Tabs;
@@ -10,9 +12,11 @@ const { TabPane } = Tabs;
 const UserSection = () => {
     const [searchText, setSearchText] = useState('');
     const [users, setUserKeys] = useState([]); // Stato per le chiavi dell'utente
+    const [copiedKeyId, setCopiedKeyId] = useState(null); // Stato per tracciare quale chiave è stata copiata
 
     const navigate = useNavigate();
     const { isAuthenticated, logout } = useAuth();
+    const { darkMode } = useTheme();
     const username = localStorage.getItem('username');
 
     useEffect(() => {
@@ -47,9 +51,21 @@ const UserSection = () => {
         navigate('/upload');
     };
 
-    const handleCopyKey = (key) => {
-        navigator.clipboard.writeText(key);
-        message.success("Chiave copiata negli appunti!");
+    const handleCopyKey = (key, id) => {
+        navigator.clipboard.writeText(key)
+            .then(() => {
+                // Set this key as being copied - for visual feedback
+                setCopiedKeyId(id);
+                
+                // Reset states after 5 seconds
+                setTimeout(() => {
+                    setCopiedKeyId(null);
+                }, 5000);
+            })
+            .catch(err => {
+                message.error('Impossibile copiare la chiave');
+                console.error('Failed to copy: ', err);
+            });
     };
 
     const handleDisableKey = async (key) => {
@@ -73,26 +89,29 @@ const UserSection = () => {
         }
     };
 
-
-    // Force light theme (even when the browser is in dark mode)
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', 'light'); // Force light theme globally
-        document.body.style.backgroundColor = '#f0f0f0'; // Keep body background light
-        document.body.style.color = '#000'; // Make text dark
-    }, []);
-
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="bg-white shadow-md">
+        <div className={`min-h-screen ${darkMode ? 'dark:bg-darkBg' : 'bg-gray-50'}`}>
+            <header className={`${darkMode ? 'dark:bg-darkCard dark:border-darkBorder border-b' : 'bg-white shadow-md'}`}>
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-blue-600">KeyVault RSA</h1>
+                    <h1 
+                        onClick={() => navigate('/')}
+                        className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'} cursor-pointer hover:text-blue-500 transition duration-200`}
+                    >
+                        KeyVault RSA
+                    </h1>
                     <div className="flex items-center space-x-6">
+                        <ThemeToggle />
+                        
                         {isAuthenticated ? (
                             <>
-                                <Button type="text" onClick={handleUpload}>
+                                <Button type="text" onClick={handleUpload} 
+                                    className={darkMode ? 'text-gray-300' : ''}>
                                     <UploadOutlined /> Carica Chiave
                                 </Button>
-                                <Button type="text" onClick={handleLogout}>Disconnetti</Button>
+                                <Button type="text" onClick={handleLogout}
+                                    className={darkMode ? 'text-gray-300' : ''}>
+                                    Disconnetti
+                                </Button>
                             </>
                         ) : (
                             <Button type="default" onClick={() => navigate('/login')}>
@@ -107,24 +126,27 @@ const UserSection = () => {
                 <Input
                     size="large"
                     placeholder="Cerca per nome utente o caratteristiche della chiave..."
-                    prefix={<SearchOutlined />}
+                    prefix={<SearchOutlined className={darkMode ? 'text-gray-400' : ''} />}
                     onChange={(e) => setSearchText(e.target.value)}
-                    className="max-w-2xl mx-auto mb-6"
+                    className={`max-w-2xl mx-auto mb-6 ${darkMode ? 'bg-darkCard border-darkBorder text-white placeholder-gray-400' : ''}`}
                 />
 
                 {/* Keys List */}
-                <Tabs className="bg-white p-6 rounded-lg shadow-sm">
-                    <TabPane tab="Le Mie Chiavi">
+                <Tabs className={`${darkMode ? 'dark:bg-darkCard dark:border-darkBorder border' : 'bg-white'} p-6 rounded-lg shadow-sm`}>
+                    <TabPane tab={<span 
+                        className={darkMode ? 'text-gray-300 cursor-pointer hover:text-blue-500' : 'cursor-pointer hover:text-blue-500'}
+                        onClick={() => navigate('/')}
+                    >Le Mie Chiavi</span>}>
                         <section className="w-full space-y-4">
                             {users.length === 0 ? (
-                                <p>Non hai ancora caricato chiavi</p>
+                                <p className={darkMode ? 'text-gray-300' : ''}>Non hai ancora caricato chiavi</p>
                             ) : (
                                 users.map((user, index) => (
-                                    <Card key={index} className="shadow-sm">
+                                    <Card key={index} className={darkMode ? 'shadow-sm dark:bg-darkCard dark:border-darkBorder' : 'shadow-sm'}>
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 {/* Nome completo e username */}
-                                                <h3 className="text-lg font-medium">
+                                                <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : ''}`}>
                                                     {user.user
                                                         ? `${user.user.name} ${user.user.surname}`
                                                         : 'Utente sconosciuto'}
@@ -138,7 +160,7 @@ const UserSection = () => {
                                                 </p>
 
                                                 {/* Anteprima della chiave pubblica */}
-                                                <p className="mt-2 font-mono text-sm text-gray-600">
+                                                <p className={`mt-2 font-mono text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                     {user.publicK
                                                         ? user.publicK.substring(0, 100)
                                                         : 'Nessuna chiave disponibile'}
@@ -147,17 +169,23 @@ const UserSection = () => {
                                             <div className="flex flex-col">
                                                 {/* Pulsante copia */}
                                                 <Button
-                                                    icon={<CopyOutlined />}
-                                                    onClick={() => handleCopyKey(user.publicK)}
-                                                    className="!rounded-button whitespace-nowrap m-1"
+                                                    icon={copiedKeyId === index ? null : <CopyOutlined />}
+                                                    onClick={() => handleCopyKey(user.publicK, index)}
+                                                    className={`!rounded-button whitespace-nowrap m-1 transition-colors duration-200 ${
+                                                        copiedKeyId === index 
+                                                            ? '!bg-green-100 !text-green-800 !border-green-500 hover:!bg-green-100 hover:!text-green-800 focus:!bg-green-100 focus:!text-green-800 active:!bg-green-100' 
+                                                            : darkMode 
+                                                                ? 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600' 
+                                                                : ''
+                                                    }`}
                                                 >
-                                                    Copia Chiave
+                                                    {copiedKeyId === index ? 'Chiave Copiata' : 'Copia Chiave'}
                                                 </Button>
-                                                {/* Pulsante copia */}
+                                                {/* Pulsante disattiva */}
                                                 <Button
                                                     icon={<CopyOutlined />}
                                                     onClick={() => handleDisableKey(user.publicK)}
-                                                    className="!rounded-button whitespace-nowrap m-1"
+                                                    className={`!rounded-button whitespace-nowrap m-1 ${darkMode ? 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600' : ''}`}
                                                 >
                                                     Disattiva Chiave
                                                 </Button>
