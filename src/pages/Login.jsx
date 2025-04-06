@@ -45,17 +45,26 @@ function Login() {
 
             if (response.status === 200) {
                 setIsAuthenticated(true);  // L'utente è autenticato
+                setIsLoading(false); // Make sure to set loading to false on success
                 message.success('Login effettuato con successo!');
                 login(username);
                 navigate("/");
             } else {
                 setError('Credenziali errate.');
+                setIsLoading(false); // Set loading to false on error
                 message.error('Credenziali errate.');
             }
         } catch (error) {
             setIsLoading(false);
-            setError('Errore durante il login.');
-            message.error('Errore durante il login.');
+            
+            // Check if it's an authentication error
+            if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                setError('Wrong credentials');
+                message.error('Wrong credentials');
+            } else {
+                setError('Errore durante il login.');
+                message.error('Errore durante il login.');
+            }
             console.error('Errore nel login:', error);
         }
     };
@@ -135,14 +144,26 @@ function Login() {
                         </div>
                     </div>
 
+                    {/* Display error message */}
+                    {error && (
+                        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+                            {error}
+                        </div>
+                    )}
+
                     {/* Submit Button */}
                     <button
                         type="button"
                         ref={loginButtonRef}
                         onClick={handleLogin}
-                        className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold text-xl hover:bg-blue-600 transition duration-300"
+                        disabled={!username || !password || isLoading}
+                        className={`w-full py-3 rounded-lg font-semibold text-xl transition duration-300 ${
+                            !username || !password || isLoading
+                            ? 'bg-blue-300 cursor-not-allowed text-white' 
+                            : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        }`}
                     >
-                        Accedi
+                        {isLoading ? 'Logging in...' : 'Accedi'}
                     </button>
                 </form>
 
