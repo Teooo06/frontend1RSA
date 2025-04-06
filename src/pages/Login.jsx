@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaUser, FaLock } from "react-icons/fa";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +22,22 @@ function Login() {
     const navigate = useNavigate();
     const { login } = useAuth();
     const { darkMode } = useTheme();
+
+    // Add useEffect to clear error after 5 seconds
+    useEffect(() => {
+        let errorTimer;
+        
+        if (error) {
+            errorTimer = setTimeout(() => {
+                setError(null);
+            }, 5000); // 5 seconds
+        }
+        
+        // Cleanup function to clear timeout if component unmounts or error changes
+        return () => {
+            if (errorTimer) clearTimeout(errorTimer);
+        };
+    }, [error]); // Re-run when error changes
 
     // Handle form submission - for both button click and Enter key
     const handleSubmit = async () => {
@@ -144,9 +160,9 @@ function Login() {
                         </div>
                     </div>
 
-                    {/* Display error message */}
+                    {/* Display error message with centered text */}
                     {error && (
-                        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+                        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-center">
                             {error}
                         </div>
                     )}
