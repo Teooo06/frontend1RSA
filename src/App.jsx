@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; 
 import { useAuth } from "./contex/AuthContext.jsx";
 import { useTheme } from "./contex/ThemeContext.jsx";
-import ThemeToggle from './components/ThemeToggle.jsx';
+import ThemeToggle from "./components/ThemeToggle.jsx";
 
 const App = () => {
     const navigate = useNavigate(); // Hook per la navigazione
@@ -286,7 +286,7 @@ const App = () => {
                         <div className="flex justify-between items-center mb-6">
                             <h2 
                                 onClick={() => navigate('/')}
-                                className={`text-2xl font-semibold ${darkMode ? 'text-white' : ''} cursor-pointer hover:text-blue-500 transition duration-200`}
+                                className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-black'} cursor-pointer hover:text-blue-500 transition duration-200`}
                             >
                                 Chiavi Pubbliche RSA
                             </h2>
@@ -363,7 +363,7 @@ const App = () => {
                 <section className={`${darkMode ? 'dark:bg-darkCard dark:border-darkBorder border' : 'bg-white'} p-6 rounded-lg shadow mt-8`}>
                     <h2 
                         onClick={() => navigate('/')}
-                        className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : ''} cursor-pointer hover:text-blue-500 transition duration-200`}
+                        className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-black'} cursor-pointer hover:text-blue-500 transition duration-200`}
                     >
                         Statistiche
                     </h2>
