@@ -7,14 +7,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KeyVault RSA</title>
     <script>
-      // Check for saved theme preference
-      const savedTheme = localStorage.getItem('darkMode');
-      if (savedTheme === 'true') {
-        document.documentElement.classList.add('dark');
-        document.body.style.backgroundColor = '#1a1a1a';
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      // Immediately apply theme without any delay
+      (function() {
+        const savedTheme = localStorage.getItem('darkMode');
+        const html = document.documentElement;
+        const isDark = savedTheme === 'true';
+        
+        // Apply styles directly and consistently for both themes
+        if (isDark) {
+          html.classList.add('dark');
+          html.style.colorScheme = 'dark';
+          document.write('<style>body{background-color:#1a1a1a !important;color:#fff !important;}</style>');
+        } else {
+          html.classList.remove('dark');
+          html.style.colorScheme = 'light';
+          document.write('<style>body{background-color:#f0f0f0 !important;color:#000 !important;}</style>');
+        }
+      })();
     </script>
   </head>
   <body>

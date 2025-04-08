@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Input, Button, Card, Tabs, Modal, message, Tag } from 'antd';
-import { SearchOutlined, UploadOutlined, CopyOutlined } from '@ant-design/icons';
+import { Button, Card, Tabs, message, Tag } from 'antd';
+import { UploadOutlined, CopyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "./contex/AuthContext.jsx";
 import { useTheme } from "./contex/ThemeContext.jsx";
@@ -10,7 +10,6 @@ import axios from 'axios';
 const { TabPane } = Tabs;
 
 const UserSection = () => {
-    const [searchText, setSearchText] = useState('');
     const [users, setUserKeys] = useState([]); // Stato per le chiavi dell'utente
     const [copiedKeyId, setCopiedKeyId] = useState(null); // Stato per tracciare quale chiave è stata copiata
 
@@ -20,7 +19,7 @@ const UserSection = () => {
     const username = localStorage.getItem('username');
 
     useEffect(() => {
-        // Pulisce il localStorage e disabilita l'autenticazione al reload della pagina
+        // Recupero delle chiavi dell'utente dal server
         const fetchUserKeys = async () => {
             try {
                 const response = await axios.get(`http://localhost:8080/api/users/getKeysByUsername`, {
@@ -41,41 +40,45 @@ const UserSection = () => {
         fetchUserKeys();
     }, [username, logout]);
 
+    // Gestisce il logout dell'utente
     const handleLogout = () => {
         logout();  // Fa il logout, pulisce localStorage e reindirizza
         navigate("/");
         window.location.reload();
     };
 
+    // Naviga alla pagina di caricamento chiavi
     const handleUpload = () => {
         navigate('/upload');
     };
 
+    // Copia la chiave negli appunti con feedback visivo
     const handleCopyKey = (key, id) => {
         navigator.clipboard.writeText(key)
             .then(() => {
-                // Set this key as being copied - for visual feedback
+                // Imposta questa chiave come copiata - per feedback visivo
                 setCopiedKeyId(id);
                 
-                // Reset states after 5 seconds
+                // Resetta lo stato dopo 5 secondi
                 setTimeout(() => {
                     setCopiedKeyId(null);
                 }, 5000);
             })
             .catch(err => {
                 message.error('Impossibile copiare la chiave');
-                console.error('Failed to copy: ', err);
+                console.error('Errore durante la copia:', err);
             });
     };
 
+    // Disabilita una chiave sul server
     const handleDisableKey = async (key) => {
         try {
-            // Disabilita la chiave nel backend
+            // Chiamata API per disabilitare la chiave
             await axios.put(`http://localhost:8080/api/users/disableKey`, null, {
                 params: { key }
             });
 
-            // Aggiorna lo stato dell'utente per riflettere il cambiamento
+            // Aggiorna lo stato locale per riflettere il cambiamento
             setUserKeys((prevUsers) =>
                 prevUsers.map((user) =>
                     user.publicK === key ? { ...user, validazioni: false } : user
@@ -123,19 +126,10 @@ const UserSection = () => {
             </header>
 
             <main className="max-w-7xl mx-auto px-4 py-8">
-                <Input
-                    size="large"
-                    placeholder="Cerca per nome utente o caratteristiche della chiave..."
-                    prefix={<SearchOutlined className={darkMode ? 'text-gray-400' : ''} />}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    className={`max-w-2xl mx-auto mb-6 ${darkMode ? 'bg-darkCard border-darkBorder text-white placeholder-gray-400' : ''}`}
-                />
-
-                {/* Keys List */}
+                {/* Lista delle chiavi dell'utente */}
                 <Tabs className={`${darkMode ? 'dark:bg-darkCard dark:border-darkBorder border' : 'bg-white'} p-6 rounded-lg shadow-sm`}>
                     <TabPane tab={<span 
-                        className={darkMode ? 'text-gray-300 cursor-pointer hover:text-blue-500' : 'cursor-pointer hover:text-blue-500'}
-                        onClick={() => navigate('/')}
+                        className={darkMode ? 'text-gray-300 hover:text-blue-500' : 'hover:text-blue-500'}
                     >Le Mie Chiavi</span>}>
                         <section className="w-full space-y-4">
                             {users.length === 0 ? (
@@ -171,7 +165,7 @@ const UserSection = () => {
                                                 <Button
                                                     icon={copiedKeyId === index ? null : <CopyOutlined />}
                                                     onClick={() => handleCopyKey(user.publicK, index)}
-                                                    className={`!rounded-button whitespace-nowrap m-1 transition-colors duration-200 ${
+                                                    className={`!rounded-button whitespace-nowrap m-1 transition-colors duration-200 min-w-[160px] flex items-center justify-center ${
                                                         copiedKeyId === index 
                                                             ? '!bg-green-100 !text-green-800 !border-green-500 hover:!bg-green-100 hover:!text-green-800 focus:!bg-green-100 focus:!text-green-800 active:!bg-green-100' 
                                                             : darkMode 
@@ -179,15 +173,39 @@ const UserSection = () => {
                                                                 : ''
                                                     }`}
                                                 >
-                                                    {copiedKeyId === index ? 'Chiave Copiata' : 'Copia Chiave'}
+                                                    <span className="inline-block text-center">{copiedKeyId === index ? 'Chiave Copiata' : 'Copia Chiave'}</span>
                                                 </Button>
+                                                
                                                 {/* Pulsante disattiva */}
                                                 <Button
-                                                    icon={<CopyOutlined />}
                                                     onClick={() => handleDisableKey(user.publicK)}
-                                                    className={`!rounded-button whitespace-nowrap m-1 ${darkMode ? 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600' : ''}`}
+                                                    disabled={!user.validazioni}
+                                                    className={`
+                                                        !rounded-button 
+                                                        whitespace-nowrap 
+                                                        m-1 
+                                                        min-w-[160px] 
+                                                        flex 
+                                                        items-center 
+                                                        justify-center 
+                                                        ${!user.validazioni ? 'opacity-50 cursor-not-allowed' : ''}
+                                                    `}
+                                                    style={{
+                                                        background: user.validazioni 
+                                                            ? '#ffcccc' // Light red background for enabled keys
+                                                            : (darkMode ? 'rgb(55, 65, 81)' : ''), 
+                                                        color: user.validazioni ? '#8b0000' : (darkMode ? 'white' : ''),
+                                                        borderColor: user.validazioni ? '#ff8080' : (darkMode ? 'rgb(75, 85, 99)' : ''),
+                                                        padding: '4px 15px',
+                                                        lineHeight: '22px',
+                                                        height: '32px',
+                                                    }}
+                                                    title={!user.validazioni ? 'Questa chiave è già disattivata' : 'Disattiva questa chiave'}
                                                 >
-                                                    Disattiva Chiave
+                                                    <div className="flex items-center justify-center w-full">
+                                                        <CopyOutlined className="mr-1 flex-shrink-0" />
+                                                        <span className="flex-shrink-0">Disattiva Chiave</span>
+                                                    </div>
                                                 </Button>
                                             </div>
                                         </div>

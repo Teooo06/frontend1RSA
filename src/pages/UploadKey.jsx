@@ -1,109 +1,71 @@
 import React, { useState, useRef } from 'react';
-import { Button, Input, message, Card, Alert, Select } from 'antd';
+import { Button, Input, message, Card, Alert } from 'antd';
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useTheme } from "../contex/ThemeContext.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 
+/**
+ * Componente UploadKey
+ * 
+ * Questo componente fornisce un'interfaccia per gli utenti per caricare le loro chiavi pubbliche RSA.
+ * Include validazione, gestione degli errori e funzionalità di accessibilità.
+ */
+
 const { TextArea } = Input;
-const { Option } = Select;
 
 const UploadKey = () => {
     const [key, setKey] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [validationError, setValidationError] = useState('');
-    const [keyLength, setKeyLength] = useState(null);
     
-    // Add ref for the textarea
     const keyTextAreaRef = useRef(null);
 
     const navigate = useNavigate();
     const { darkMode } = useTheme();
 
-    // Valid RSA key lengths
-    const validKeyLengths = [1024, 2048, 3072, 4096];
-
-    // Function to generate a random RSA key of specified length
-    const generateRandomKey = (length) => {
-        console.log("Generating key with length:", length);
-        
-        if (!length) {
-            message.error('Seleziona prima una lunghezza di chiave');
-            return;
-        }
-        
-        try {
-            // Generate a random alphanumeric string of appropriate length
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            
-            // Ensure length is treated as a number
-            const bitLength = parseInt(length, 10);
-            if (isNaN(bitLength)) {
-                message.error('Lunghezza chiave non valida');
-                return;
-            }
-            
-            // Calculate exact character count for the selected bit length
-            // (8 bits per character in our simulation)
-            const charCount = Math.ceil(bitLength / 8);
-            console.log("Character count:", charCount);
-            
-            for (let i = 0; i < charCount; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            
-            console.log("Generated key length (chars):", result.length);
-            setKey(result);
-            setValidationError('');
-            message.success(`Chiave di ${bitLength} bit generata con successo!`);
-        } catch (error) {
-            console.error("Error generating key:", error);
-            message.error('Errore durante la generazione della chiave');
-        }
-    };
-
-    // Function to validate the key (checks for alphanumeric characters AND valid length)
+    /**
+     * Valida il formato della chiave pubblica RSA
+     * Validazione meno restrittiva che controlla solo la lunghezza minima
+     * 
+     * @param {string} inputKey - La chiave da validare
+     * @returns {boolean} - Se la chiave è valida
+     */
     const validateKey = (inputKey) => {
-        // Empty key is invalid but handled separately
         if (!inputKey) return false;
-        
-        // Check if key contains only letters and numbers
-        const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-        if (!alphanumericRegex.test(inputKey)) {
+        if (inputKey.trim().length < 10) {
             return false;
         }
-        
-        // For generated keys or manually entered keys that match our pattern,
-        // we'll consider them valid
         return true;
     };
     
-    // Get the error message based on key validation
+    /**
+     * Restituisce un messaggio di errore di validazione appropriato in base alla validazione della chiave
+     * 
+     * @param {string} inputKey - La chiave da validare
+     * @returns {string} - Messaggio di errore o stringa vuota se valida
+     */
     const getValidationErrorMessage = (inputKey) => {
         if (!inputKey) return 'Inserire una chiave.';
-        
-        const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-        if (!alphanumericRegex.test(inputKey)) {
-            return 'La chiave può contenere solo lettere e numeri (nessun carattere speciale).';
+        if (inputKey.trim().length < 10) {
+            return 'La chiave è troppo corta. Inserisci una chiave RSA valida.';
         }
-        
         return '';
     };
 
-    // Handle key input change with validation
+    /**
+     * Gestisce i cambiamenti nell'input della chiave ed esegue la validazione
+     * 
+     * @param {Event} e - Evento di cambiamento dell'input
+     */
     const handleKeyChange = (e) => {
         const newKey = e.target.value;
         setKey(newKey);
-        
-        // Clear validation error if input is empty
         if (!newKey) {
             setValidationError('');
             return;
         }
-        
-        // Validate the key and show appropriate error message
         if (!validateKey(newKey)) {
             setValidationError(getValidationErrorMessage(newKey));
         } else {
@@ -111,86 +73,80 @@ const UploadKey = () => {
         }
     };
 
-    // Handle key press events
+    /**
+     * Gestisce gli eventi da tastiera per l'invio del modulo
+     * 
+     * @param {KeyboardEvent} e - Evento da tastiera
+     */
     const handleKeyDown = (e) => {
-        // Check if Enter was pressed (without Shift for new lines)
         if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault(); // Prevent default behavior (new line)
-            handleConfirm(); // Call the confirm function
+            e.preventDefault();
+            handleConfirm();
         }
     };
 
-    // Try multiple submission formats
-    const attemptKeySubmission = async () => {
+    /**
+     * Invia la chiave al server con gestione degli errori
+     */
+    const submitKey = async () => {
         setIsLoading(true);
         setError(null);
         
-        // Create an array of different payload formats to try
-        const payloadFormats = [
-            // Format 1: Using publicK field
-            { 
-                payload: { publicK: key, user: localStorage.getItem('username') },
-                description: "Format with publicK field"
-            },
-            // Format 2: Using key field
-            { 
-                payload: { key: key, user: localStorage.getItem('username') },
-                description: "Format with key field"
-            },
-            // Format 3: Using nested user object
-            { 
-                payload: { publicK: key, user: { username: localStorage.getItem('username') } },
-                description: "Format with nested user object"
-            },
-            // Format 4: Using username directly
-            { 
-                payload: { publicK: key, username: localStorage.getItem('username') },
-                description: "Format with username field"
+        try {
+            const username = localStorage.getItem('username');
+            if (!username) {
+                throw new Error('Username non trovato nella sessione. Effettua nuovamente il login.');
             }
-        ];
-        
-        let lastError = null;
-        
-        // Try each format until one succeeds
-        for (const format of payloadFormats) {
-            try {
-                console.log(`Trying submission with ${format.description}:`, format.payload);
-                
-                const response = await axios.post(
-                    `http://localhost:8080/api/users/addKey`,
-                    format.payload,
-                    {
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        timeout: 10000
-                    }
-                );
-                
-                console.log(`${format.description} response:`, response);
-                
-                if (response.status === 200) {
-                    setIsLoading(false);
-                    message.success('Chiave salvata con successo!');
-                    navigate("/");
-                    return; // Success! Exit the function
+            
+            const payload = { 
+                key: key,
+                user: username
+            };
+            
+            const response = await axios.post(
+                `http://localhost:8080/api/users/addKey`,
+                payload,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(localStorage.getItem('token') && {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        })
+                    },
+                    timeout: 15000
                 }
-            } catch (error) {
-                console.error(`${format.description} failed:`, error);
-                lastError = error;
+            );
+            
+            if (response.status === 200 || response.status === 201) {
+                setIsLoading(false);
+                message.success('Chiave salvata con successo!');
+                navigate("/");
+                return;
             }
-        }
-        
-        // If we get here, all formats failed
-        setIsLoading(false);
-        
-        // Use the last error for messaging
-        if (lastError?.response?.status === 500) {
-            setError('Il server ha riscontrato un problema. Potrebbe esserci un problema con il formato della chiave o con il server stesso.');
-            message.error('Errore del server. Per favore contatta l\'amministratore.');
-        } else {
-            const errorMsg = lastError?.response?.data?.message || 
-                          lastError?.response?.statusText ||
+            
+            throw new Error(`Risposta con stato inatteso: ${response.status}`);
+            
+        } catch (error) {
+            setIsLoading(false);
+            
+            if (error.response) {
+                if (error.response.status === 401 || error.response.status === 403) {
+                    const msg = 'Sessione scaduta. Effettua nuovamente il login.';
+                    setError(msg);
+                    message.error(msg);
+                    setTimeout(() => navigate('/login'), 2000);
+                    return;
+                } else if (error.response.status === 400) {
+                    const msg = 'Formato della chiave non valido.';
+                    setError(msg);
+                    message.error(msg);
+                    return;
+                }
+            }
+            
+            const errorMsg = error?.response?.data?.message || 
+                          error?.response?.statusText ||
+                          error.message ||
                           'Impossibile salvare la chiave. Riprova più tardi.';
             
             setError(errorMsg);
@@ -198,9 +154,10 @@ const UploadKey = () => {
         }
     };
 
-    // Modified handleConfirm to use the new multi-attempt function
+    /**
+     * Valida e avvia il processo di invio della chiave
+     */
     const handleConfirm = async () => {
-        // Check if key is valid before submitting
         if (!key) {
             setValidationError('Inserire una chiave.');
             return;
@@ -211,7 +168,6 @@ const UploadKey = () => {
             return;
         }
         
-        // Get username from localStorage
         const username = localStorage.getItem('username');
         if (!username) {
             message.error('Sessione utente non valida. Effettua il login di nuovo.');
@@ -219,115 +175,35 @@ const UploadKey = () => {
             return;
         }
         
-        // Try all submission formats
-        attemptKeySubmission();
+        submitKey();
     };
 
-    const tryAlternativeSubmission = async () => {
-        setIsLoading(true);
-        setError(null);
-        
-        try {
-            const alternativeData = {
-                keyValue: key,
-                username: localStorage.getItem('username')
-            };
-            
-            console.log("Trying alternative submission format:", alternativeData);
-            
-            const response = await axios.post(
-                `http://localhost:8080/api/users/addKey`,
-                alternativeData,
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-            
-            if (response.status === 200) {
-                setIsLoading(false);
-                message.success('Chiave salvata con successo!');
-                navigate("/");
-            } else {
-                throw new Error(`Status: ${response.status}`);
-            }
-        } catch (error) {
-            console.error("Alternative submission failed:", error);
-            setIsLoading(false);
-            setError("Anche il formato alternativo non ha funzionato. Contatta l'amministratore del sistema.");
-        }
-    };
-
-    // Function to directly send a simplified request
-    const trySimplifiedSubmission = async () => {
-        setIsLoading(true);
-        setError(null);
-        
-        try {
-            // Get the username
-            const username = localStorage.getItem('username');
-            
-            // Try the simplest possible format
-            const simpleData = { 
-                key: key,
-                username: username 
-            };
-            
-            console.log("Trying simplified submission:", simpleData);
-            
-            // Use fetch instead of axios for a different approach
-            const response = await fetch('http://localhost:8080/api/users/addKey', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(simpleData)
-            });
-            
-            if (response.ok) {
-                setIsLoading(false);
-                message.success('Chiave salvata con successo!');
-                navigate("/");
-            } else {
-                throw new Error(`Status: ${response.status} ${response.statusText}`);
-            }
-        } catch (error) {
-            console.error("Simplified submission failed:", error);
-            setIsLoading(false);
-            setError("Anche il formato semplificato ha fallito. Si prega di contattare l'assistenza tecnica.");
-        }
-    };
-
-    // Function to handle cancel action
+    /**
+     * Annulla l'operazione e torna alla home
+     */
     const handleCancel = () => {
         navigate("/");
         setKey('');
         message.info('Operazione annullata.');
     };
 
-    // Handle key length selection
-    const handleKeyLengthChange = (value) => {
-        console.log("Selected key length:", value);
-        setKeyLength(value);
-    };
-
-    // Custom styles to hide scrollbar while maintaining scroll functionality
     const textAreaStyle = {
-        scrollbarWidth: 'none', /* Firefox */
-        msOverflowStyle: 'none', /* IE 10+ */
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
     };
     
-    // Remove webkit scrollbar
     const globalScrollbarStyle = `
         .ant-input::-webkit-scrollbar {
             display: none;
+        }
+
+        .ant-btn-primary[disabled].dark-mode-button {
+            color: rgba(255, 255, 255, 0.65) !important;
         }
     `;
 
     return (
         <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-darkBg' : 'bg-gray-100'}`}>
-            {/* Add global style to hide webkit scrollbar */}
             <style>{globalScrollbarStyle}</style>
             
             <Card className={`w-full max-w-lg p-6 shadow-md ${darkMode ? 'bg-darkCard border-darkBorder' : ''}`}>
@@ -342,21 +218,21 @@ const UploadKey = () => {
                     Carica Nuova Chiave RSA
                 </h2>
 
-                {/* Text area for RSA key input with hidden scrollbar */}
-                <label className={`block font-medium mb-2 ${darkMode ? 'text-white' : ''}`}>Chiave Pubblica</label>
+                <label className={`block font-medium mb-2 ${darkMode ? 'text-white' : ''}`}>
+                    Chiave Pubblica <span className="text-xs text-gray-500 ml-1">(incolla la chiave completa)</span>
+                </label>
                 <TextArea
                     ref={keyTextAreaRef}
-                    rows={4}
+                    rows={6}
                     value={key}
                     onChange={handleKeyChange}
                     onKeyDown={handleKeyDown}
-                    placeholder="Incolla qui la tua chiave pubblica RSA"
+                    placeholder="Incolla qui la tua chiave pubblica RSA (inclusi caratteri speciali come +, /, =)"
                     className={`mb-4 ${darkMode ? 'bg-darkCard border-darkBorder text-white' : ''}`}
                     status={validationError ? 'error' : ''}
                     style={textAreaStyle}
                 />
                 
-                {/* Display validation error */}
                 {validationError && (
                     <Alert 
                         message={validationError} 
@@ -366,36 +242,14 @@ const UploadKey = () => {
                     />
                 )}
 
-                {/* Key generation options */}
-                <div className="flex items-center mb-4">
-                    <Select
-                        placeholder="Seleziona lunghezza chiave"
-                        style={{ width: 200, marginRight: 8 }}
-                        onChange={handleKeyLengthChange}
-                        value={keyLength}
-                        className={darkMode ? 'ant-select-dark' : ''}
-                    >
-                        <Option value="1024">1024 bit</Option>
-                        <Option value="2048">2048 bit</Option>
-                        <Option value="3072">3072 bit</Option>
-                        <Option value="4096">4096 bit</Option>
-                    </Select>
-                    <Button 
-                        onClick={() => generateRandomKey(keyLength)}
-                        className={`mr-2 ${darkMode ? 'border-gray-600 text-white' : ''}`}
-                        disabled={!keyLength}
-                    >
-                        Genera
-                    </Button>
-                </div>
-
-                {/* Action buttons */}
                 <div className="flex justify-between mt-4">
                     <Button 
                         type="primary" 
                         onClick={handleConfirm} 
                         loading={isLoading}
                         disabled={!!validationError || !key}
+                        className={darkMode ? 'dark-mode-button' : ''}
+                        style={darkMode && (!!validationError || !key) ? { color: 'rgba(255, 255, 255, 0.65)' } : {}}
                     >
                         Conferma
                     </Button>
@@ -409,32 +263,20 @@ const UploadKey = () => {
                     </Button>
                 </div>
                 
-                {/* Display error message with retry options if server error occurs */}
-                {error && (
-                    <div className="mt-4">
-                        <Alert 
-                            message={error} 
-                            type="error" 
-                            showIcon 
-                            className="mb-2"
-                        />
-                        <div className="flex justify-between mt-2">
-                            <Button 
-                                onClick={tryAlternativeSubmission}
-                                type="default"
-                                disabled={isLoading}
-                            >
-                                Formato alternativo
-                            </Button>
-                            <Button 
-                                onClick={trySimplifiedSubmission}
-                                type="default"
-                                disabled={isLoading}
-                            >
-                                Formato semplificato
-                            </Button>
-                        </div>
+                {!error && !validationError && (
+                    <div className="mt-2 text-xs text-gray-500">
+                        Nota: Assicurati di incollare la chiave RSA completa, inclusi eventuali caratteri speciali.
                     </div>
+                )}
+
+                {error && (
+                    <Alert 
+                        message={error}
+                        description="Se il problema persiste, verifica che il formato della chiave sia corretto."
+                        type="error" 
+                        showIcon 
+                        className="mt-4"
+                    />
                 )}
             </Card>
         </div>

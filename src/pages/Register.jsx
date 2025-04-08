@@ -3,7 +3,7 @@ import axios from "axios";
 import { message, Alert, Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contex/AuthContext.jsx";
-import { FaLock, FaUser } from "react-icons/fa";
+import { FaLock, FaUser, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useTheme } from "../contex/ThemeContext.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 
@@ -15,7 +15,8 @@ function Register() {
     const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [error, setError] = useState(null);
-    
+    const [passwordVisible, setPasswordVisible] = useState(false);
+
     // Validation error states
     const [nameError, setNameError] = useState('');
     const [surnameError, setSurnameError] = useState('');
@@ -68,20 +69,20 @@ function Register() {
         }
         return '';
     };
-    
+
     // Handle input changes with validation
     const handleNameChange = (e) => {
         const value = e.target.value;
         setName(value);
         setNameError(validateName(value));
     };
-    
+
     const handleSurnameChange = (e) => {
         const value = e.target.value;
         setSurname(value);
         setSurnameError(validateSurname(value));
     };
-    
+
     const handleUsernameChange = (e) => {
         const value = e.target.value;
         setUsername(value);
@@ -100,20 +101,20 @@ function Register() {
         const currentSurnameError = validateSurname(surname);
         const currentUsernameError = validateUsername(username);
         const currentPasswordError = validatePassword(password);
-        
+
         setNameError(currentNameError);
         setSurnameError(currentSurnameError);
         setUsernameError(currentUsernameError);
         setPasswordError(currentPasswordError);
-        
+
         if (currentNameError || currentSurnameError || currentUsernameError || currentPasswordError || !name || !surname || !username || !password) {
             setError('Compila tutti i campi correttamente.');
             return;
         }
-        
+
         setIsLoading(true);
         setError(null);
-        
+
         try {
             const singInData = {
                 name: name,
@@ -160,7 +161,7 @@ function Register() {
     const handleKeyDown = (e, field) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            switch(field) {
+            switch (field) {
                 case 'name':
                     surnameInputRef.current.focus();
                     break;
@@ -190,20 +191,26 @@ function Register() {
 
     const isSubmitDisabled = nameError || surnameError || usernameError || passwordError || !name || !surname || !username || !password;
 
+    // Toggle password visibility
+    const togglePasswordVisibility = (e) => {
+        e.preventDefault(); // Prevent form submission
+        setPasswordVisible(!passwordVisible);
+    };
+
     return (
         <div className={`flex items-center justify-center h-screen w-screen ${darkMode ? 'bg-darkBg' : 'bg-white'}`}>
             <div className={`${darkMode ? 'bg-darkCard border-darkBorder' : 'bg-white border-gray-200'} p-10 rounded-2xl shadow-2xl w-full max-w-lg border`}>
                 <div className="flex justify-end mb-4">
                     <ThemeToggle />
                 </div>
-                
-                <h2 
+
+                <h2
                     onClick={goToHome}
                     className={`text-4xl font-bold text-center ${darkMode ? 'text-white' : 'text-black'} mb-6 cursor-pointer hover:text-blue-500 transition duration-200`}
                 >
                     Registrati
                 </h2>
-                
+
                 <form className={darkMode ? 'text-white' : 'text-black'}>
                     <div className="mb-6">
                         <label className={`block ${darkMode ? 'text-white' : 'text-black'} font-medium mb-2`}>
@@ -225,7 +232,7 @@ function Register() {
                             <div className="text-red-500 text-sm mt-1">{nameError}</div>
                         )}
                     </div>
-                    
+
                     <div className="mb-6">
                         <label className={`block ${darkMode ? 'text-white' : 'text-black'} font-medium mb-2`}>
                             Cognome
@@ -246,7 +253,7 @@ function Register() {
                             <div className="text-red-500 text-sm mt-1">{surnameError}</div>
                         )}
                     </div>
-                    
+
                     <div className="mb-6">
                         <label className={`block ${darkMode ? 'text-white' : 'text-black'} font-medium mb-2`}>
                             Username
@@ -267,7 +274,7 @@ function Register() {
                             <div className="text-red-500 text-sm mt-1">{usernameError}</div>
                         )}
                     </div>
-                    
+
                     <div className="mb-6">
                         <label className={`block ${darkMode ? 'text-white' : 'text-black'} font-medium mb-2`}>
                             Password
@@ -276,28 +283,37 @@ function Register() {
                             <FaLock className={`${passwordError ? 'text-red-500' : 'text-gray-500'} mr-2`} />
                             <input
                                 ref={passwordInputRef}
-                                type="password"
+                                type={passwordVisible ? "text" : "password"}
                                 value={password}
                                 onChange={handlePasswordChange}
                                 onKeyDown={(e) => handleKeyDown(e, 'password')}
                                 className={`w-full bg-transparent focus:outline-none text-lg ${darkMode ? 'text-white placeholder-gray-400' : 'text-black'}`}
                                 placeholder="Inserisci la tua password"
                             />
+                            <button
+                                onClick={togglePasswordVisibility}
+                                className={`ml-2 focus:outline-none ${darkMode ? 'text-gray-400 hover:text-white' : 'bg-white text-gray-500 hover:text-gray-700'}`}
+                                type="button"
+                                tabIndex="-1"
+                                aria-label={passwordVisible ? "Nascondi password" : "Mostra password"}
+                            >
+                                {passwordVisible ? <FaEyeSlash /> : <FaEye />}
+                            </button>
                         </div>
                         {passwordError && (
                             <div className="text-red-500 text-sm mt-1">{passwordError}</div>
                         )}
                     </div>
-                    
+
                     {error && (
-                        <Alert 
-                            message={error} 
-                            type="error" 
-                            showIcon 
+                        <Alert
+                            message={error}
+                            type="error"
+                            showIcon
                             className="mb-4"
                         />
                     )}
-                    
+
                     <button
                         type="button"
                         ref={registerButtonRef}
@@ -308,17 +324,17 @@ function Register() {
                         Registrati
                     </button>
                 </form>
-                
+
                 <div className="mt-6 pt-4 border-t border-gray-300 flex justify-between">
-                    <Button 
-                        type="link" 
+                    <Button
+                        type="link"
                         onClick={goToLogin}
                         className="text-blue-500 hover:text-blue-600"
                     >
                         Torna al Login
                     </Button>
-                    <Button 
-                        type="link" 
+                    <Button
+                        type="link"
                         onClick={goToHome}
                         className="text-blue-500 hover:text-blue-600"
                     >

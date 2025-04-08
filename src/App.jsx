@@ -2,69 +2,70 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, Card, Tag, message } from 'antd';
 import { SearchOutlined, CopyOutlined, UserOutlined, CalendarOutlined, UploadOutlined } from '@ant-design/icons';
 import * as echarts from 'echarts';
-import { useNavigate } from 'react-router-dom'; // Just use the navigate hook
-import axios from 'axios'; // Import axios for making requests
+import { useNavigate } from 'react-router-dom'; 
+import axios from 'axios'; 
 import { useAuth } from "./contex/AuthContext.jsx";
 import { useTheme } from "./contex/ThemeContext.jsx";
 import ThemeToggle from './components/ThemeToggle.jsx';
 
 const App = () => {
-    const navigate = useNavigate(); // Hook for navigation
+    const navigate = useNavigate(); // Hook per la navigazione
     
-    // Chart reference for proper cleanup and reinitialization
+    // Riferimento per il grafico (per pulizia e reinizializzazione corretta)
     const chartRef = useRef(null);
 
-    // State variables
+    // Variabili di stato
     const [isLoading, setIsLoading] = useState(false);
-    const [users, setUsers] = useState([]); // State to store users' data
-    const {isAuthenticated, logout } = useAuth(); // Usa lo stato di autenticazione
-    const { darkMode } = useTheme(); // Get dark mode state
-    const [copiedKeyId, setCopiedKeyId] = useState(null); // State to track which key is being copied
+    const [users, setUsers] = useState([]); // Stato per memorizzare i dati degli utenti
+    const [searchText, setSearchText] = useState(''); // Stato per il testo di ricerca
+    const {isAuthenticated, logout } = useAuth(); // Stato di autenticazione
+    const { darkMode } = useTheme(); // Stato modalità scura
+    const [copiedKeyId, setCopiedKeyId] = useState(null); // Stato per tenere traccia della chiave copiata
 
-    // Fetch users data from backend
+    // Recupero dati utenti dal backend
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/api/users/getKeys'); // Make a GET request to fetch data
+                const response = await axios.get('http://localhost:8080/api/users/getKeys'); 
                 if (Array.isArray(response.data)) {
-                    setUsers(response.data); // Set the response data to the state
+                    setUsers(response.data); // Imposta i dati di risposta nello stato
                 } else {
-                    setUsers([]); // Ensure we set users as an empty array if the response is not an array
+                    setUsers([]); // Assicura che lo stato users sia un array vuoto se la risposta non è un array
                     message.error('Dati non validi ricevuti dal server.');
                 }
             } catch (error) {
-                console.error('Error fetching users data:', error);
-                setUsers([]); // Ensure we set users as an empty array in case of an error
+                console.error('Errore nel recupero dei dati degli utenti:', error);
+                setUsers([]); // Assicura che lo stato users sia un array vuoto in caso di errore
                 message.error('Impossibile caricare i dati degli utenti.');
             }
         };
         fetchUsers();
-    }, []); // Empty dependency array to fetch data only on mount
+    }, []); // Array di dipendenze vuoto per eseguire il fetch solo al montaggio
 
-    // Process key data to get distribution by key length
+    // Elabora i dati delle chiavi per ottenere la distribuzione per lunghezza
     const processKeyLengthData = () => {
-        // Standard RSA key lengths in bits
+        // Lunghezze standard delle chiavi RSA in bit
         const standardLengths = [1024, 2048, 3072, 4096];
         const lengthCounts = {};
         
-        // Initialize counts for all standard lengths
+        // Inizializza i conteggi per tutte le lunghezze standard
         standardLengths.forEach(length => {
             lengthCounts[length] = 0;
         });
         
-        // Add a category for non-standard lengths
+        // Aggiungi una categoria per lunghezze non standard
         lengthCounts['other'] = 0;
         
-        // Count keys by their approximate bit length
+        // Conta le chiavi per la loro lunghezza approssimativa in bit
         users.forEach(user => {
             if (user.publicK) {
-                // Convert character count to approximate bit length (1 char ≈ 8 bits)
+                // Converti il conteggio dei caratteri in lunghezza approssimativa in bit (1 carattere ≈ 8 bit)
                 const keyLengthInBits = user.publicK.length * 8;
                 
-                // Find the closest standard key length
+                // Trova la lunghezza standard più vicina
                 let matched = false;
                 for (const stdLength of standardLengths) {
-                    // Allow 5% tolerance for matching standard lengths
+                    // Consenti una tolleranza del 5% per corrispondere alle lunghezze standard
                     const minLength = stdLength * 0.95;
                     const maxLength = stdLength * 1.05;
                     
@@ -75,16 +76,16 @@ const App = () => {
                     }
                 }
                 
-                // If no standard length matched, count as "other"
+                // Se nessuna lunghezza standard corrisponde, conta come "altro"
                 if (!matched) {
                     lengthCounts['other']++;
                 }
             }
         });
         
-        // Convert counts to chart data format
+        // Converti i conteggi nel formato dati del grafico
         const chartData = Object.entries(lengthCounts)
-            .filter(([_, count]) => count > 0) // Only include lengths that have at least one key
+            .filter(([_, count]) => count > 0) // Includi solo le lunghezze che hanno almeno una chiave
             .map(([length, count]) => ({
                 value: count,
                 name: length === 'other' ? 'Altro' : `${length} bit`
@@ -93,27 +94,27 @@ const App = () => {
         return chartData;
     };
 
-    // Initialize and update chart when darkMode changes or users data changes
+    // Inizializza e aggiorna il grafico quando cambia darkMode o i dati degli utenti
     useEffect(() => {
         const chartDom = document.getElementById('keySizeChart');
         if (!chartDom) return;
         
-        // Properly dispose of any existing chart instance to prevent memory leaks
+        // Smaltisce correttamente l'istanza del grafico esistente per prevenire perdite di memoria
         if (chartRef.current) {
             chartRef.current.dispose();
         }
         
-        // Create fresh chart instance
+        // Crea una nuova istanza del grafico
         const myChart = echarts.init(chartDom);
         chartRef.current = myChart;
         
-        // Process key length data
+        // Elabora i dati di lunghezza delle chiavi
         const keyLengthData = processKeyLengthData();
         
-        // Calculate total for percentage display
+        // Calcola il totale per la visualizzazione percentuale
         const total = keyLengthData.reduce((sum, item) => sum + item.value, 0);
         
-        // Configure chart based on current theme and real data
+        // Configura il grafico in base al tema corrente e ai dati reali
         const option = {
             animation: false,
             backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
@@ -149,21 +150,41 @@ const App = () => {
         
         myChart.setOption(option);
         
-        // Handle window resize
+        // Gestione del ridimensionamento della finestra
         const handleResize = () => {
             myChart.resize();
         };
         window.addEventListener('resize', handleResize);
         
-        // Clean up
+        // Pulizia
         return () => {
             window.removeEventListener('resize', handleResize);
             myChart.dispose();
             chartRef.current = null;
         };
-    }, [darkMode, users]); // Re-run when darkMode or users data changes
+    }, [darkMode, users]); // Riesegui quando cambia darkMode o i dati degli utenti
 
-    // Handlers
+    // Filtra gli utenti in base al testo di ricerca
+    const filteredUsers = users.filter(user => {
+        const searchLower = searchText.toLowerCase();
+        
+        // Se non c'è testo di ricerca, restituisci tutti gli utenti
+        if (!searchText.trim()) return true;
+        
+        // Controlla se i dati dell'utente esistono
+        if (!user || !user.user) return false;
+        
+        // Cerca nei dettagli dell'utente
+        const nameMatch = `${user.user.name} ${user.user.surname}`.toLowerCase().includes(searchLower);
+        const usernameMatch = user.user.username.toLowerCase().includes(searchLower);
+        
+        // Cerca nella chiave (se si cerca una parte di una chiave)
+        const keyMatch = user.publicK && user.publicK.toLowerCase().includes(searchLower);
+        
+        return nameMatch || usernameMatch || keyMatch;
+    });
+
+    // Gestori di eventi
     const handleLogin = () => {
         navigate('/login');
     };
@@ -173,25 +194,25 @@ const App = () => {
             message.warning('Effettua il login per caricare una chiave');
             return;
         }
-        // Use React Router navigate instead of window.location for smoother transitions
-        // that preserve the state, including dark mode
+        // Usa navigate di React Router invece di window.location per transizioni più fluide
+        // che preservano lo stato, inclusa la modalità scura
         navigate('/upload');
     };
 
     const handleCopyKey = (key, id) => {
         navigator.clipboard.writeText(key)
             .then(() => {
-                // Set this key as being copied - for visual feedback
+                // Imposta questa chiave come copiata - per feedback visivo
                 setCopiedKeyId(id);
                 
-                // Reset states after 5 seconds
+                // Resetta gli stati dopo 5 secondi
                 setTimeout(() => {
                     setCopiedKeyId(null);
                 }, 5000);
             })
             .catch(err => {
                 message.error('Impossibile copiare la chiave');
-                console.error('Failed to copy: ', err);
+                console.error('Errore durante la copia:', err);
             });
     };
 
@@ -201,7 +222,7 @@ const App = () => {
 
     return (
         <div className={`min-h-screen ${darkMode ? 'dark:bg-darkBg' : 'bg-gray-50'}`}>
-            {/* Header */}
+            {/* Intestazione */}
             <header className={`${darkMode ? 'dark:bg-darkCard dark:border-darkBorder border-b' : 'bg-white shadow-md'}`}>
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     <h1 
@@ -245,9 +266,21 @@ const App = () => {
                 </div>
             </header>
 
-            {/* Main Content */}
+            {/* Contenuto Principale */}
             <main className="max-w-7xl mx-auto px-4 py-8">
-                {/* Public Keys Section */}
+                {/* Barra di Ricerca */}
+                <div className="mb-6">
+                    <Input
+                        size="large"
+                        placeholder="Cerca per nome utente o caratteristiche della chiave..."
+                        prefix={<SearchOutlined className={darkMode ? 'text-gray-400' : ''} />}
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        className={`max-w-2xl mx-auto ${darkMode ? 'bg-darkCard border-darkBorder text-white placeholder-gray-400' : ''}`}
+                    />
+                </div>
+
+                {/* Sezione Chiavi Pubbliche */}
                 <section className="mb-8">
                     {isAuthenticated ? (
                         <div className="flex justify-between items-center mb-6">
@@ -271,12 +304,14 @@ const App = () => {
                     )}
 
                     <div className="flex space-x-6">
-                        {/* Keys List */}
+                        {/* Lista Chiavi */}
                         <section className="w-full space-y-4">
-                            {users.length === 0 ? (
-                                <p className={darkMode ? 'text-gray-300' : ''}>Nessuna chiave trovata</p>
+                            {filteredUsers.length === 0 ? (
+                                <p className={darkMode ? 'text-gray-300' : ''}>
+                                    {searchText.trim() ? 'Nessun risultato trovato' : 'Nessuna chiave trovata'}
+                                </p>
                             ) : (
-                                users.map((user, index) => (
+                                filteredUsers.map((user, index) => (
                                     <Card key={index} className={darkMode ? 'shadow-sm dark:bg-darkCard dark:border-darkBorder' : 'shadow-sm'}>
                                         <div className="flex justify-between items-start">
                                             <div>
@@ -302,7 +337,7 @@ const App = () => {
                                                 </p>
                                             </div>
 
-                                            {/* Pulsante copia - with copy feedback */}
+                                            {/* Pulsante copia - con feedback di copia */}
                                             <Button
                                                 icon={copiedKeyId === index ? null : <CopyOutlined />}
                                                 onClick={() => handleCopyKey(user.publicK, index)}
@@ -324,7 +359,7 @@ const App = () => {
                     </div>
                 </section>
 
-                {/* Statistics Section */}
+                {/* Sezione Statistiche */}
                 <section className={`${darkMode ? 'dark:bg-darkCard dark:border-darkBorder border' : 'bg-white'} p-6 rounded-lg shadow mt-8`}>
                     <h2 
                         onClick={() => navigate('/')}

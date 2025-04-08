@@ -1,15 +1,28 @@
+/**
+ * Foglio di Stile Principale
+ * 
+ * Questo file contiene stili globali e variabili di tema per l'applicazione.
+ * Include le classi di utilità di Tailwind CSS e CSS personalizzato per la gestione del tema.
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Variabili CSS per il cambio istantaneo del tema */
 :root {
+  --bg-color: #ffffff;
+  --text-color: #213547;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+  
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: var(--text-color);
+  background-color: var(--bg-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,57 +30,87 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Additional dark mode styles for Ant Design components */
+/* Disabilita tutte le transizioni durante il cambio di tema */
+.disable-transitions * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Applica le variabili del tema scuro immediatamente quando viene aggiunta la classe dark */
+.dark {
+  --bg-color: #1a1a1a;
+  --text-color: rgba(255, 255, 255, 0.87);
+  --card-bg: #2d2d2d;
+  --border-color: #444;
+  
+  color-scheme: dark;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+}
+
+/* Forza l'applicazione immediata dei colori di sfondo in modalità chiara */
+:root:not(.dark) body {
+  background-color: #f0f0f0 !important;
+}
+
+/* Rimuove le transizioni che potrebbero causare ritardi visivi */
+.dark *,
+.dark *:before,
+.dark *:after {
+  transition-property: none !important;
+}
+
+/* Stili aggiuntivi per la modalità scura per i componenti Ant Design */
 .dark .ant-btn:not(.ant-btn-primary):not(.ant-btn-text) {
-  background-color: #2d2d2d;
-  border-color: #444;
-  color: #fff;
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+  color: var(--text-color);
 }
 
 .dark .ant-btn:not(.ant-btn-primary):hover {
   border-color: #666;
-  color: #fff;
+  color: var(--text-color);
 }
 
-/* Fix for input boxes in dark mode */
+/* Correzione per le caselle di input in modalità scura */
 .dark input,
 .dark textarea,
 .dark .ant-input {
-  background-color: #2d2d2d !important;
-  border-color: #444 !important;
-  color: #fff !important;
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
 }
 
-/* Keep dark background when input is focused */
+/* Mantiene lo sfondo scuro quando l'input è focalizzato */
 .dark input:focus,
 .dark textarea:focus,
 .dark .ant-input:focus,
 .dark .ant-input-focused {
-  background-color: #2d2d2d !important;
-  border-color: #1677ff !important; /* Blue border to indicate focus */
+  background-color: var(--card-bg) !important;
+  border-color: #1677ff !important; /* Bordo blu per indicare il focus */
   box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2) !important;
 }
 
-/* Fix placeholder text color in dark mode */
+/* Correzione del colore del testo segnaposto in modalità scura */
 .dark input::placeholder,
 .dark textarea::placeholder,
 .dark .ant-input::placeholder {
   color: rgba(255, 255, 255, 0.45) !important;
 }
 
-/* Fix for Ant Design Input components */
+/* Correzione per i componenti Input di Ant Design */
 .dark .ant-input-affix-wrapper {
-  background-color: #2d2d2d !important;
-  border-color: #444 !important;
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
 }
 
 .dark .ant-input-affix-wrapper:focus,
 .dark .ant-input-affix-wrapper-focused {
-  background-color: #2d2d2d !important;
+  background-color: var(--card-bg) !important;
   border-color: #1677ff !important;
 }
 
-/* Custom notification styling */
+/* Stile personalizzato per le notifiche */
 .custom-notification-class {
   font-size: 16px !important;
   font-weight: 500 !important;
@@ -76,19 +119,19 @@
 
 .dark .custom-notification-class {
   background-color: rgba(0, 0, 0, 0.8) !important;
-  color: white !important;
+  color: var(--text-color) !important;
 }
 
 .dark .ant-message .custom-notification-class {
   background-color: rgba(0, 0, 0, 0.8) !important;
-  color: white !important;
+  color: var(--text-color) !important;
 }
 
 .ant-message .custom-notification-class {
   border-left: 4px solid #52c41a !important;
 }
 
-/* Custom notification styling - Fix visibility issues */
+/* Stile personalizzato per le notifiche - Risolve problemi di visibilità */
 .ant-message .ant-message-notice-content {
   padding: 10px 16px;
 }
@@ -102,14 +145,14 @@
   align-items: center;
 }
 
-/* Dark mode styling for notifications */
+/* Stile per la modalità scura per le notifiche */
 .dark .ant-message .custom-notification-class {
-  background-color: #2d2d2d;
+  background-color: var(--card-bg);
   border-left: 4px solid #52c41a;
-  color: white;
+  color: var(--text-color);
 }
 
-/* Ensure icon is visible and properly aligned */
+/* Assicura che l'icona sia visibile e correttamente allineata */
 .ant-message .custom-notification-icon {
   margin-right: 8px;
   font-size: 16px;
@@ -142,7 +185,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--bg-color);
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -156,13 +199,13 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: var(--text-color);
+    background-color: var(--bg-color);
   }
   a:hover {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: var(--bg-color);
   }
 }

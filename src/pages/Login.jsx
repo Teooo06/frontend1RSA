@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { FaUser, FaLock } from "react-icons/fa";
+import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { message, Button } from "antd";
@@ -13,6 +13,7 @@ function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [error, setError] = useState(null);
+    const [passwordVisible, setPasswordVisible] = useState(false);
 
     // Create refs for form elements for keyboard navigation
     const usernameInputRef = useRef(null);
@@ -107,6 +108,12 @@ function Login() {
         navigate('/');
     };
 
+    // Toggle password visibility
+    const togglePasswordVisibility = (e) => {
+        e.preventDefault(); // Prevent form submission
+        setPasswordVisible(!passwordVisible);
+    };
+
     return (
         <div className={`flex items-center justify-center h-screen w-screen ${darkMode ? 'bg-darkBg' : 'bg-white'}`}>
             <div className={`${darkMode ? 'bg-darkCard border-darkBorder' : 'bg-white border-gray-200'} p-10 rounded-2xl shadow-2xl w-full max-w-lg border`}>
@@ -150,13 +157,22 @@ function Login() {
                             <FaLock className="text-gray-500 mr-2" />
                             <input
                                 ref={passwordInputRef}
-                                type="password"
+                                type={passwordVisible ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 onKeyDown={(e) => handleKeyDown(e, 'password')}
                                 className={`w-full bg-transparent focus:outline-none text-lg ${darkMode ? 'text-white placeholder-gray-400' : 'text-black'}`}
                                 placeholder="Inserisci la tua password"
                             />
+                            <button 
+                                onClick={togglePasswordVisibility}
+                                className={`ml-2 focus:outline-none ${darkMode ? 'text-gray-400 hover:text-white' : 'bg-white text-gray-500 hover:text-gray-700'}`}
+                                type="button"
+                                tabIndex="-1"
+                                aria-label={passwordVisible ? "Nascondi password" : "Mostra password"}
+                            >
+                                {passwordVisible ? <FaEyeSlash /> : <FaEye />}
+                            </button>
                         </div>
                     </div>
 
