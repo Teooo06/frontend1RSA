@@ -41,59 +41,7 @@ const App = () => {
         fetchUsers();
     }, []); // Empty dependency array to fetch data only on mount
 
-    // Process key data to get distribution by key length
-    const processKeyLengthData = () => {
-        // Standard RSA key lengths in bits
-        const standardLengths = [1024, 2048, 3072, 4096];
-        const lengthCounts = {};
-        
-        // Initialize counts for all standard lengths
-        standardLengths.forEach(length => {
-            lengthCounts[length] = 0;
-        });
-        
-        // Add a category for non-standard lengths
-        lengthCounts['other'] = 0;
-        
-        // Count keys by their approximate bit length
-        users.forEach(user => {
-            if (user.publicK) {
-                // Convert character count to approximate bit length (1 char ≈ 8 bits)
-                const keyLengthInBits = user.publicK.length * 8;
-                
-                // Find the closest standard key length
-                let matched = false;
-                for (const stdLength of standardLengths) {
-                    // Allow 5% tolerance for matching standard lengths
-                    const minLength = stdLength * 0.95;
-                    const maxLength = stdLength * 1.05;
-                    
-                    if (keyLengthInBits >= minLength && keyLengthInBits <= maxLength) {
-                        lengthCounts[stdLength]++;
-                        matched = true;
-                        break;
-                    }
-                }
-                
-                // If no standard length matched, count as "other"
-                if (!matched) {
-                    lengthCounts['other']++;
-                }
-            }
-        });
-        
-        // Convert counts to chart data format
-        const chartData = Object.entries(lengthCounts)
-            .filter(([_, count]) => count > 0) // Only include lengths that have at least one key
-            .map(([length, count]) => ({
-                value: count,
-                name: length === 'other' ? 'Altro' : `${length} bit`
-            }));
-            
-        return chartData;
-    };
-
-    // Initialize and update chart when darkMode changes or users data changes
+    // Initialize and update chart when darkMode changes
     useEffect(() => {
         const chartDom = document.getElementById('keySizeChart');
         if (!chartDom) return;
@@ -107,13 +55,7 @@ const App = () => {
         const myChart = echarts.init(chartDom);
         chartRef.current = myChart;
         
-        // Process key length data
-        const keyLengthData = processKeyLengthData();
-        
-        // Calculate total for percentage display
-        const total = keyLengthData.reduce((sum, item) => sum + item.value, 0);
-        
-        // Configure chart based on current theme and real data
+        // Configure chart based on current theme
         const option = {
             animation: false,
             backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
@@ -124,10 +66,7 @@ const App = () => {
                     color: darkMode ? '#ffffff' : '#333333'
                 }
             },
-            tooltip: { 
-                trigger: 'item',
-                formatter: '{a} <br/>{b}: {c} ({d}%)' 
-            },
+            tooltip: { trigger: 'item' },
             textStyle: {
                 color: darkMode ? '#ffffff' : '#333333'
             },
@@ -137,11 +76,12 @@ const App = () => {
                     type: 'pie',
                     radius: '70%',
                     label: {
-                        color: darkMode ? '#ffffff' : '#333333',
-                        formatter: '{b}: {c} ({d}%)'
+                        color: darkMode ? '#ffffff' : '#333333'
                     },
-                    data: keyLengthData.length > 0 ? keyLengthData : [
-                        { value: 1, name: 'Nessuna chiave' }
+                    data: [
+                        { value: 45, name: '2048 bit' },
+                        { value: 30, name: '3072 bit' },
+                        { value: 25, name: '4096 bit' },
                     ],
                 },
             ],
@@ -161,7 +101,7 @@ const App = () => {
             myChart.dispose();
             chartRef.current = null;
         };
-    }, [darkMode, users]); // Re-run when darkMode or users data changes
+    }, [darkMode]); // Re-run when darkMode changes
 
     // Handlers
     const handleLogin = () => {
